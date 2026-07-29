@@ -17,3 +17,9 @@
 
 # TypeScript
 *.tsbuildinfo
+/generated
+
+/.agents
+/.claude
+/.windsurf
+/skills-lock.json
