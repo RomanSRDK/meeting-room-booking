@@ -1,0 +1,127 @@
+import type { NextFunction, Request, Response } from "express";
+import {
+  createBookingService,
+  deleteBookingService,
+  getBookingsService,
+  getMyBookingsService,
+} from "../services/booking.service.ts";
+import type {
+  BookingParams,
+  CreateBookingBody,
+  GetBookingsQuery,
+} from "../types/booking.types.ts";
+import createHttpError from "http-errors";
+
+export async function getBookings(
+  req: Request<object, object, object, GetBookingsQuery>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const start = new Date(req.query.start);
+    const end = new Date(req.query.end);
+
+    if (start >= end) {
+      throw createHttpError(400, "Start date must be earlier than end date");
+    }
+
+    const bookings = await getBookingsService({
+      start,
+      end,
+    });
+
+    res.status(200).json({
+      status: 200,
+      message: "Bookings retrieved successfully",
+      data: bookings,
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+}
+
+export async function createBooking(
+  req: Request<object, object, CreateBookingBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.userId) {
+      throw createHttpError(401, "Authentication required");
+    }
+
+    const startsAt = new Date(req.body.startsAt);
+    const endsAt = new Date(req.body.endsAt);
+
+    if (startsAt >= endsAt) {
+      throw createHttpError(400, "Start date must be earlier than end date");
+    }
+
+    if (startsAt <= new Date()) {
+      throw createHttpError(400, "Booking start date must be in the future");
+    }
+
+    const booking = await createBookingService({
+      title: req.body.title,
+      roomId: req.body.roomId,
+      userId: req.userId,
+      startsAt,
+      endsAt,
+    });
+
+    res.status(201).json({
+      status: 201,
+      message: "Booking created successfully",
+      data: booking,
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+}
+
+export async function getMyBookings(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.userId) {
+      throw createHttpError(401, "Authentication required");
+    }
+
+    const bookings = await getMyBookingsService(req.userId);
+
+    res.status(200).json({
+      status: 200,
+      message: "User bookings retrieved successfully",
+      data: bookings,
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+}
+
+export async function deleteBooking(
+  req: Request<BookingParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.userId) {
+      throw createHttpError(401, "Authentication required");
+    }
+
+    const deletedBooking = await deleteBookingService(
+      req.params.bookingId,
+      req.userId,
+    );
+
+    res.status(200).json({
+      status: 200,
+      message: "Booking deleted successfully",
+      data: deletedBooking,
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+}

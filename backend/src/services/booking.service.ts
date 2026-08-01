@@ -1,0 +1,200 @@
+import createHttpError from "http-errors";
+
+import { Prisma } from "../../generated/prisma/client.ts";
+import { prisma } from "../lib/prisma.ts";
+import type { CreateBookingInput } from "../types/booking.types.ts";
+
+const MAX_TRANSACTION_RETRIES = 3;
+
+type GetBookingsInput = {
+  start: Date;
+  end: Date;
+};
+
+export async function getBookingsService({ start, end }: GetBookingsInput) {
+  return prisma.booking.findMany({
+    where: {
+      startsAt: {
+        lt: end,
+      },
+      endsAt: {
+        gt: start,
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      endsAt: true,
+      roomId: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      startsAt: "asc",
+    },
+  });
+}
+
+export async function createBookingService({
+  title,
+  roomId,
+  userId,
+  startsAt,
+  endsAt,
+}: CreateBookingInput) {
+  const room = await prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!room) {
+    throw createHttpError(404, "Room not found");
+  }
+
+  for (let attempt = 1; attempt <= MAX_TRANSACTION_RETRIES; attempt += 1) {
+    try {
+      return await prisma.$transaction(
+        async (transaction) => {
+          const conflictingBooking = await transaction.booking.findFirst({
+            where: {
+              roomId,
+              startsAt: {
+                lt: endsAt,
+              },
+              endsAt: {
+                gt: startsAt,
+              },
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (conflictingBooking) {
+            throw createHttpError(
+              409,
+              "Room is already booked for the selected time",
+            );
+          }
+
+          return transaction.booking.create({
+            data: {
+              title,
+              roomId,
+              userId,
+              startsAt,
+              endsAt,
+            },
+            select: {
+              id: true,
+              title: true,
+              startsAt: true,
+              endsAt: true,
+              room: {
+                select: {
+                  id: true,
+                  name: true,
+                  floor: true,
+                  capacity: true,
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+              createdAt: true,
+            },
+          });
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (error: unknown) {
+      const isTransactionConflict =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034";
+
+      if (!isTransactionConflict) {
+        throw error;
+      }
+
+      if (attempt === MAX_TRANSACTION_RETRIES) {
+        throw createHttpError(
+          409,
+          "Booking conflict occurred. Please try again",
+        );
+      }
+    }
+  }
+
+  throw createHttpError(409, "Booking conflict occurred. Please try again");
+}
+
+export async function getMyBookingsService(userId: string) {
+  return prisma.booking.findMany({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      endsAt: true,
+      createdAt: true,
+      room: {
+        select: {
+          id: true,
+          name: true,
+          floor: true,
+          capacity: true,
+        },
+      },
+    },
+    orderBy: {
+      startsAt: "asc",
+    },
+  });
+}
+
+export async function deleteBookingService(bookingId: string, userId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+    select: {
+      id: true,
+      userId: true,
+    },
+  });
+
+  if (!booking) {
+    throw createHttpError(404, "Booking not found");
+  }
+
+  if (booking.userId !== userId) {
+    throw createHttpError(403, "You are not allowed to delete this booking");
+  }
+
+  return prisma.booking.delete({
+    where: {
+      id: bookingId,
+    },
+    select: {
+      id: true,
+      title: true,
+    },
+  });
+}
