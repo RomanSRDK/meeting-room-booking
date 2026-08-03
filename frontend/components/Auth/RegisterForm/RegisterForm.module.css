@@ -1,0 +1,113 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--color-text);
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-small);
+  outline: none;
+
+  transition:
+    border-color var(--transition-duration) ease,
+    box-shadow var(--transition-duration) ease,
+    background-color var(--transition-duration) ease;
+}
+
+.input:hover {
+  border-color: var(--color-border-hover);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(23 23 23 / 12%);
+}
+
+.errorSlot {
+  min-height: 20px;
+}
+
+.requestErrorSlot {
+  min-height: 42px;
+}
+
+.error {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-error);
+}
+
+.requestError {
+  margin: 0;
+  padding: 10px 12px;
+
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-error);
+
+  background-color: var(--color-error-background);
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--border-radius-small);
+}
+
+.submitButton {
+  min-height: 44px;
+  padding: 10px 16px;
+
+  font-weight: 600;
+  color: var(--color-primary-text);
+
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius-small);
+
+  transition:
+    background-color var(--transition-duration) ease,
+    border-color var(--transition-duration) ease,
+    opacity var(--transition-duration) ease,
+    transform var(--transition-duration) ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.submitButton:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+  transform: translateY(1px);
+}
+
+.submitButton:focus-visible {
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: 2px;
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+}

@@ -30,7 +30,6 @@ export async function registerUserService({
         id: true,
         name: true,
         email: true,
-        createdAt: true,
       },
     });
 

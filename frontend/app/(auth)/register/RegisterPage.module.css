@@ -1,0 +1,49 @@
+.main {
+  display: flex;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100vh;
+  padding: 48px 20px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  width: 100%;
+  max-width: 420px;
+}
+
+.title {
+  margin: 0;
+
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.footer {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.link {
+  font-weight: 600;
+  color: var(--color-text);
+
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  transition: opacity var(--transition-duration) ease;
+}
+
+.link:hover {
+  opacity: 0.65;
+}

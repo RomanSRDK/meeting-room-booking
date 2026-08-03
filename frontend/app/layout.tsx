@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
 import { AppProvider } from "@/components/AppProvider";
-
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meeting Room Booking",
+  title: {
+    default: "Meeting Room Booking",
+    template: "%s | Meeting Room Booking",
+  },
   description:
     "Book meeting rooms, view the weekly schedule, and manage your bookings.",
 };
