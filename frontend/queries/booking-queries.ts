@@ -1,16 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getBookings } from "@/services/booking-service";
+import { getBookings, getMyBookings } from "@/services/booking-service";
 
-type BookingsQueryOptionsParams = {
+type BookingsQueryParams = {
   start: string;
   end: string;
 };
 
-export function bookingsQueryOptions({
-  start,
-  end,
-}: BookingsQueryOptionsParams) {
+export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
   return queryOptions({
     queryKey: ["bookings", start, end],
     queryFn: () =>
@@ -20,3 +17,8 @@ export function bookingsQueryOptions({
       }),
   });
 }
+
+export const myBookingsQueryOptions = queryOptions({
+  queryKey: ["bookings", "my"],
+  queryFn: getMyBookings,
+});

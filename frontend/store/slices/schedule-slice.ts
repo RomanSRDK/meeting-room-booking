@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
+import type { Booking } from "@/types/booking";
+
 type BookingDraft = {
   roomId: string;
   startsAt: string;
@@ -10,12 +12,16 @@ type ScheduleState = {
   selectedRoomId: string | null;
   isBookingModalOpen: boolean;
   bookingDraft: BookingDraft | null;
+  isBookingDetailsModalOpen: boolean;
+  selectedBooking: Booking | null;
 };
 
 const initialState: ScheduleState = {
   selectedRoomId: null,
   isBookingModalOpen: false,
   bookingDraft: null,
+  isBookingDetailsModalOpen: false,
+  selectedBooking: null,
 };
 
 const scheduleSlice = createSlice({
@@ -35,10 +41,25 @@ const scheduleSlice = createSlice({
       state.isBookingModalOpen = false;
       state.bookingDraft = null;
     },
+
+    openBookingDetailsModal: (state, action: PayloadAction<Booking>) => {
+      state.isBookingDetailsModalOpen = true;
+      state.selectedBooking = action.payload;
+    },
+
+    closeBookingDetailsModal: (state) => {
+      state.isBookingDetailsModalOpen = false;
+      state.selectedBooking = null;
+    },
   },
 });
 
-export const { selectRoom, openBookingModal, closeBookingModal } =
-  scheduleSlice.actions;
+export const {
+  selectRoom,
+  openBookingModal,
+  closeBookingModal,
+  openBookingDetailsModal,
+  closeBookingDetailsModal,
+} = scheduleSlice.actions;
 
 export const scheduleReducer = scheduleSlice.reducer;

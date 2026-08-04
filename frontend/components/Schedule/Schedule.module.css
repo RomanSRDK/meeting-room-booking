@@ -48,7 +48,7 @@
 
 .scheduleWrapper {
   overflow-x: auto;
-  overflow-y: clip;
+  overflow-y: hidden;
 
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-medium);
@@ -84,12 +84,21 @@
   min-width: 0;
   padding: 8px;
 
+  background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
 }
 
 .dayHeader:last-child {
   border-right: 0;
+}
+
+.todayHeader {
+  background-color: var(--color-surface);
+}
+
+.todayHeader .dayName {
+  font-weight: 700;
 }
 
 .dayName {
@@ -104,18 +113,16 @@
 
   font-size: 14px;
   line-height: 1.2;
-  color: var(--color-text-secondary);
-}
-
-.dayDate,
-.bookingTime {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  color: var(--color-text-secondary);
 }
 
 .scheduleBody {
   display: grid;
   grid-template-columns: 72px minmax(840px, 1fr);
+
+  overflow: hidden;
 }
 
 .timeScale {
@@ -167,15 +174,84 @@
 }
 
 .slot {
+  position: relative;
+  z-index: 1;
+
   min-width: 0;
   min-height: 0;
+  padding: 0;
 
+  appearance: none;
+  background-color: transparent;
+  border: 0;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
+
+  cursor: pointer;
 }
 
 .slot:nth-child(7n) {
   border-right: 0;
+}
+
+.slot:not(:disabled):hover {
+  background-color: rgb(23 23 23 / 6%);
+}
+
+.slot:not(:disabled):focus-visible {
+  z-index: 4;
+
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.slot:disabled {
+  cursor: default;
+}
+
+.occupiedSlot,
+.pastSlot {
+  cursor: not-allowed;
+}
+
+.pastSlot {
+  background-color: rgb(23 23 23 / 2%);
+}
+
+.todayColumn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+
+  background-color: rgb(23 23 23 / 3%);
+
+  pointer-events: none;
+}
+
+.currentTime {
+  position: absolute;
+  z-index: 4;
+
+  height: 1px;
+
+  background-color: var(--color-primary);
+
+  pointer-events: none;
+}
+
+.currentTimeDot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+
+  width: 7px;
+  height: 7px;
+
+  background-color: var(--color-primary);
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%);
 }
 
 .booking {
@@ -188,14 +264,46 @@
 
   min-width: 0;
   min-height: 0;
-
   padding: 6px 8px;
 
   overflow: hidden;
 
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-primary);
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+
+  border: 1px solid;
   border-radius: 6px;
+}
+
+.ownBooking {
+  background-color: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.otherBooking {
+  background-color: var(--color-background);
+  border-color: var(--color-border-hover);
+
+  pointer-events: none;
+}
+
+.clickableBooking {
+  appearance: none;
+
+  cursor: pointer;
+}
+
+.clickableBooking:hover {
+  background-color: var(--color-background);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.clickableBooking:focus-visible {
+  z-index: 5;
+
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: -3px;
 }
 
 .bookingTitle {
@@ -216,6 +324,16 @@
   color: var(--color-text-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.bookingTime {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.ownBooking .bookingAuthor {
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .state {

@@ -12,8 +12,43 @@ export type Booking = {
   user: BookingAuthor;
 };
 
+export type MyBookingRoom = {
+  id: string;
+  name: string;
+  floor: number;
+  capacity: number;
+};
+
+export type MyBooking = {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  createdAt: string;
+  room: MyBookingRoom;
+};
+
 export type BookingsResponse = {
   status: number;
   message: string;
   data: Booking[];
+};
+
+export type BookingResponse = {
+  status: number;
+  message: string;
+  data: Booking;
+};
+
+export type MyBookingsResponse = {
+  status: number;
+  message: string;
+  data: MyBooking[];
+};
+
+export type CreateBookingPayload = {
+  title: string;
+  roomId: string;
+  startsAt: string;
+  endsAt: string;
 };

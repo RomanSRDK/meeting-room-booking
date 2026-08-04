@@ -1,0 +1,293 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.title {
+  margin: 0;
+
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.description {
+  margin: 8px 0 0;
+
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.counter {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 104px;
+  min-height: 80px;
+  padding: 12px;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+}
+
+.counterValue {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.counterLabel {
+  margin-top: 6px;
+
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.sectionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+
+  overflow: hidden;
+}
+
+.cardContent {
+  padding: 20px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bookingTitle {
+  margin: 0;
+
+  font-size: 18px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.roomName {
+  margin: 5px 0 0;
+
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.upcomingBadge,
+.pastBadge {
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+
+  border-radius: 999px;
+}
+
+.upcomingBadge {
+  color: var(--color-text);
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-primary);
+}
+
+.pastBadge {
+  color: var(--color-text-secondary);
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  margin: 24px 0 0;
+}
+
+.detail {
+  min-width: 0;
+}
+
+.detailLabel {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.detailValue {
+  margin: 5px 0 0;
+
+  font-size: 14px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: auto;
+  padding: 14px 20px;
+
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.cancelButton {
+  padding: 9px 14px;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #c62828;
+
+  background-color: var(--color-background);
+  border: 1px solid #c62828;
+  border-radius: var(--border-radius-medium);
+
+  cursor: pointer;
+}
+
+.cancelButton:hover:not(:disabled) {
+  color: #ffffff;
+
+  background-color: #c62828;
+}
+
+.cancelButton:focus-visible {
+  outline: 3px solid rgb(198 40 40 / 18%);
+  outline-offset: 2px;
+}
+
+.cancelButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.pastCard {
+  opacity: 0.72;
+}
+
+.emptyState {
+  padding: 32px;
+
+  text-align: center;
+
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius-medium);
+}
+
+.emptyTitle {
+  margin: 0;
+
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.emptyDescription {
+  margin: 6px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.state {
+  margin: 0;
+
+  color: var(--color-text-secondary);
+}
+
+@media (width <= 800px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 560px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .counter {
+    align-items: flex-start;
+
+    width: 100%;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+}

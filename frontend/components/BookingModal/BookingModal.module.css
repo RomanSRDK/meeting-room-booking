@@ -1,0 +1,273 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background-color: rgb(0 0 0 / 45%);
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 18%);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.title {
+  margin: 0;
+
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.description {
+  margin: 8px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.closeButton {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-text);
+
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-medium);
+
+  cursor: pointer;
+}
+
+.closeButton:hover:not(:disabled) {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.closeButton:focus-visible {
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: 2px;
+}
+
+.closeButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.form {
+  margin-top: 24px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  min-width: 0;
+  padding: 16px;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+}
+
+.detailLabel {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.detailValue {
+  overflow: hidden;
+
+  font-size: 16px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-top: 20px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.input,
+.select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+
+  font: inherit;
+  color: var(--color-text);
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.input:hover:not(:disabled),
+.select:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(23 23 23 / 10%);
+}
+
+.input:disabled,
+.select:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.inputError {
+  border-color: #c62828;
+}
+
+.inputError:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 3px rgb(198 40 40 / 12%);
+}
+
+.error {
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.4;
+  color: #c62828;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 24px;
+}
+
+.cancelButton,
+.submitButton {
+  min-height: 42px;
+  padding: 10px 16px;
+
+  font: inherit;
+  font-weight: 500;
+
+  border-radius: var(--border-radius-medium);
+
+  cursor: pointer;
+}
+
+.cancelButton {
+  color: var(--color-text);
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+}
+
+.cancelButton:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.submitButton {
+  color: var(--color-background);
+
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.submitButton:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.cancelButton:focus-visible,
+.submitButton:focus-visible {
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: 2px;
+}
+
+.cancelButton:disabled,
+.submitButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+@media (width <= 520px) {
+  .backdrop {
+    align-items: flex-end;
+
+    padding: 12px;
+  }
+
+  .modal {
+    padding: 20px;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+  }
+}
