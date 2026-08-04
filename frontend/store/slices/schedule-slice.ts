@@ -7,11 +7,13 @@ type BookingDraft = {
 };
 
 type ScheduleState = {
+  selectedRoomId: string | null;
   isBookingModalOpen: boolean;
   bookingDraft: BookingDraft | null;
 };
 
 const initialState: ScheduleState = {
+  selectedRoomId: null,
   isBookingModalOpen: false,
   bookingDraft: null,
 };
@@ -20,6 +22,10 @@ const scheduleSlice = createSlice({
   name: "schedule",
   initialState,
   reducers: {
+    selectRoom: (state, action: PayloadAction<string>) => {
+      state.selectedRoomId = action.payload;
+    },
+
     openBookingModal: (state, action: PayloadAction<BookingDraft>) => {
       state.isBookingModalOpen = true;
       state.bookingDraft = action.payload;
@@ -32,6 +38,7 @@ const scheduleSlice = createSlice({
   },
 });
 
-export const { openBookingModal, closeBookingModal } = scheduleSlice.actions;
+export const { selectRoom, openBookingModal, closeBookingModal } =
+  scheduleSlice.actions;
 
 export const scheduleReducer = scheduleSlice.reducer;
