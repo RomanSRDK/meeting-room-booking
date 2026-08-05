@@ -1,30 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import {
-  addMinutes,
-  format,
-  setHours,
-  setMilliseconds,
-  setMinutes,
-  setSeconds,
-} from "date-fns";
+import { addMinutes } from "date-fns";
 import { IoClose } from "react-icons/io5";
 import { Form, Formik } from "formik";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
 
+import {
+  formatInOfficeTimeZone,
+  formatInUserTimeZone,
+  getOfficeWorkdayEnd,
+  getTimeZoneOffsetLabel,
+  getUserTimeZone,
+  isOfficeTimeZone,
+  OFFICE_TIME_ZONE,
+} from "@/lib/date-time";
 import { createBooking } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingModal } from "@/store/slices/schedule-slice";
 import type { Booking } from "@/types/booking";
 
 import styles from "./BookingModal.module.css";
-
-const WORKING_DAY_END_HOUR = 19;
 
 const BOOKING_DURATIONS = [30, 60, 90, 120, 150, 180, 210, 240];
 
@@ -36,6 +36,10 @@ type BookingFormValues = {
 type ApiErrorResponse = {
   message?: string;
 };
+
+function subscribeToTimeZone() {
+  return () => {};
+}
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 60);
@@ -55,6 +59,12 @@ function formatDuration(duration: number) {
 export function BookingModal() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
+  const userTimeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getUserTimeZone,
+    () => OFFICE_TIME_ZONE,
+  );
 
   const isBookingModalOpen = useAppSelector(
     (state) => state.schedule.isBookingModalOpen,
@@ -128,11 +138,7 @@ export function BookingModal() {
   }
 
   const startsAt = new Date(bookingDraft.startsAt);
-
-  const workingDayEnd = setMilliseconds(
-    setSeconds(setMinutes(setHours(startsAt, WORKING_DAY_END_HOUR), 0), 0),
-    0,
-  );
+  const workingDayEnd = getOfficeWorkdayEnd(startsAt);
 
   const cachedBookingQueries = queryClient.getQueriesData<Booking[]>({
     queryKey: ["bookings"],
@@ -230,6 +236,15 @@ export function BookingModal() {
       .required("Duration is required"),
   });
 
+  const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
+
+  const userTimeZoneOffset = getTimeZoneOffsetLabel(userTimeZone, startsAt);
+
+  const officeTimeZoneOffset = getTimeZoneOffsetLabel(
+    OFFICE_TIME_ZONE,
+    startsAt,
+  );
+
   return createPortal(
     <div
       className={styles.backdrop}
@@ -266,7 +281,8 @@ export function BookingModal() {
           initialValues={initialValues}
           validationSchema={bookingValidationSchema}
           onSubmit={(values) => {
-            const endsAt = addMinutes(startsAt, values.duration);
+            const duration = Number(values.duration);
+            const endsAt = addMinutes(startsAt, duration);
 
             createBookingMutation.mutate({
               title: values.title.trim(),
@@ -277,27 +293,52 @@ export function BookingModal() {
           }}
         >
           {({ values, errors, touched, handleChange, handleBlur }) => {
-            const endsAt = addMinutes(startsAt, Number(values.duration));
+            const duration = Number(values.duration);
+            const endsAt = addMinutes(startsAt, duration);
 
             return (
               <Form className={styles.form}>
                 <div className={styles.details}>
                   <div className={styles.detail}>
-                    <span className={styles.detailLabel}>Date</span>
+                    <span className={styles.detailLabel}>Your date</span>
 
                     <strong className={styles.detailValue}>
-                      {format(startsAt, "dd.MM.yyyy")}
+                      {formatInUserTimeZone(
+                        startsAt,
+                        "dd.MM.yyyy",
+                        userTimeZone,
+                      )}
                     </strong>
                   </div>
 
                   <div className={styles.detail}>
-                    <span className={styles.detailLabel}>Time</span>
+                    <span className={styles.detailLabel}>Your time</span>
 
                     <strong className={styles.detailValue}>
-                      {format(startsAt, "HH:mm")}–{format(endsAt, "HH:mm")}
+                      {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
+                      {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
                     </strong>
                   </div>
                 </div>
+
+                {!userUsesOfficeTimeZone && (
+                  <div className={styles.officeTime}>
+                    <span className={styles.officeTimeLabel}>Office time</span>
+
+                    <strong className={styles.officeTimeValue}>
+                      {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}–
+                      {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+                    </strong>
+
+                    <span className={styles.officeTimeZone}>
+                      {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+                    </span>
+                  </div>
+                )}
+
+                <p className={styles.timeZoneHint}>
+                  Times are shown in {userTimeZone} ({userTimeZoneOffset}).
+                </p>
 
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor="booking-title">
@@ -342,9 +383,9 @@ export function BookingModal() {
                     onBlur={handleBlur}
                     onChange={handleChange}
                   >
-                    {availableDurations.map((duration) => (
-                      <option key={duration} value={duration}>
-                        {formatDuration(duration)}
+                    {availableDurations.map((durationOption) => (
+                      <option key={durationOption} value={durationOption}>
+                        {formatDuration(durationOption)}
                       </option>
                     ))}
                   </select>

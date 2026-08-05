@@ -1,19 +1,40 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { compareAsc, compareDesc, format } from "date-fns";
+import { compareAsc, compareDesc } from "date-fns";
 import toast from "react-hot-toast";
+
+import {
+  formatInOfficeTimeZone,
+  formatInUserTimeZone,
+  getTimeZoneOffsetLabel,
+  getUserTimeZone,
+  isOfficeTimeZone,
+  OFFICE_TIME_ZONE,
+} from "@/lib/date-time";
 import { myBookingsQueryOptions } from "@/queries/booking-queries";
 import { deleteBooking } from "@/services/booking-service";
+
 import styles from "./MyBookings.module.css";
 
 type ApiErrorResponse = {
   message?: string;
 };
 
+function subscribeToTimeZone() {
+  return () => {};
+}
+
 export function MyBookings() {
   const queryClient = useQueryClient();
+
+  const userTimeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getUserTimeZone,
+    () => OFFICE_TIME_ZONE,
+  );
 
   const {
     data: bookings,
@@ -68,6 +89,10 @@ export function MyBookings() {
       ),
     );
 
+  const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
+
+  const currentUserTimeZoneOffset = getTimeZoneOffsetLabel(userTimeZone, now);
+
   function handleCancelBooking(bookingId: string, bookingTitle: string) {
     const isConfirmed = window.confirm(`Cancel booking "${bookingTitle}"?`);
 
@@ -86,6 +111,13 @@ export function MyBookings() {
 
           <p className={styles.description}>
             Review your upcoming and previous room bookings.
+          </p>
+
+          <p className={styles.timeZoneNotice}>
+            Times are shown in <strong>{userTimeZone}</strong> (
+            {currentUserTimeZoneOffset}).
+            {!userUsesOfficeTimeZone &&
+              ` Office time is also displayed in ${OFFICE_TIME_ZONE}.`}
           </p>
         </div>
 
@@ -117,7 +149,13 @@ export function MyBookings() {
           <div className={styles.list}>
             {upcomingBookings.map((booking) => {
               const startsAt = new Date(booking.startsAt);
+
               const endsAt = new Date(booking.endsAt);
+
+              const officeTimeZoneOffset = getTimeZoneOffsetLabel(
+                OFFICE_TIME_ZONE,
+                startsAt,
+              );
 
               const isDeleting =
                 deleteBookingMutation.isPending &&
@@ -138,18 +176,27 @@ export function MyBookings() {
 
                     <dl className={styles.details}>
                       <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Date</dt>
+                        <dt className={styles.detailLabel}>Your date</dt>
 
                         <dd className={styles.detailValue}>
-                          {format(startsAt, "dd.MM.yyyy")}
+                          {formatInUserTimeZone(
+                            startsAt,
+                            "dd.MM.yyyy",
+                            userTimeZone,
+                          )}
                         </dd>
                       </div>
 
                       <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Time</dt>
+                        <dt className={styles.detailLabel}>Your time</dt>
 
                         <dd className={styles.detailValue}>
-                          {format(startsAt, "HH:mm")}–{format(endsAt, "HH:mm")}
+                          {formatInUserTimeZone(
+                            startsAt,
+                            "HH:mm",
+                            userTimeZone,
+                          )}
+                          –{formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
                         </dd>
                       </div>
 
@@ -169,6 +216,27 @@ export function MyBookings() {
                         </dd>
                       </div>
                     </dl>
+
+                    {!userUsesOfficeTimeZone && (
+                      <div className={styles.officeTime}>
+                        <span className={styles.officeTimeLabel}>
+                          Office time
+                        </span>
+
+                        <strong className={styles.officeTimeValue}>
+                          {formatInOfficeTimeZone(
+                            startsAt,
+                            "dd.MM.yyyy, HH:mm",
+                          )}
+                          {" – "}
+                          {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+                        </strong>
+
+                        <span className={styles.officeTimeZone}>
+                          {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <footer className={styles.cardFooter}>
@@ -209,7 +277,13 @@ export function MyBookings() {
           <div className={styles.list}>
             {pastBookings.map((booking) => {
               const startsAt = new Date(booking.startsAt);
+
               const endsAt = new Date(booking.endsAt);
+
+              const officeTimeZoneOffset = getTimeZoneOffsetLabel(
+                OFFICE_TIME_ZONE,
+                startsAt,
+              );
 
               return (
                 <article
@@ -229,18 +303,27 @@ export function MyBookings() {
 
                     <dl className={styles.details}>
                       <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Date</dt>
+                        <dt className={styles.detailLabel}>Your date</dt>
 
                         <dd className={styles.detailValue}>
-                          {format(startsAt, "dd.MM.yyyy")}
+                          {formatInUserTimeZone(
+                            startsAt,
+                            "dd.MM.yyyy",
+                            userTimeZone,
+                          )}
                         </dd>
                       </div>
 
                       <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Time</dt>
+                        <dt className={styles.detailLabel}>Your time</dt>
 
                         <dd className={styles.detailValue}>
-                          {format(startsAt, "HH:mm")}–{format(endsAt, "HH:mm")}
+                          {formatInUserTimeZone(
+                            startsAt,
+                            "HH:mm",
+                            userTimeZone,
+                          )}
+                          –{formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
                         </dd>
                       </div>
 
@@ -260,6 +343,27 @@ export function MyBookings() {
                         </dd>
                       </div>
                     </dl>
+
+                    {!userUsesOfficeTimeZone && (
+                      <div className={styles.officeTime}>
+                        <span className={styles.officeTimeLabel}>
+                          Office time
+                        </span>
+
+                        <strong className={styles.officeTimeValue}>
+                          {formatInOfficeTimeZone(
+                            startsAt,
+                            "dd.MM.yyyy, HH:mm",
+                          )}
+                          {" – "}
+                          {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+                        </strong>
+
+                        <span className={styles.officeTimeZone}>
+                          {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </article>
               );

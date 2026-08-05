@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { format } from "date-fns";
-import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
+import toast from "react-hot-toast";
+
+import {
+  formatInOfficeTimeZone,
+  formatInUserTimeZone,
+  getTimeZoneOffsetLabel,
+  getUserTimeZone,
+  isOfficeTimeZone,
+  OFFICE_TIME_ZONE,
+} from "@/lib/date-time";
 import { deleteBooking } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingDetailsModal } from "@/store/slices/schedule-slice";
@@ -17,9 +25,19 @@ type ApiErrorResponse = {
   message?: string;
 };
 
+function subscribeToTimeZone() {
+  return () => {};
+}
+
 export function BookingDetailsModal() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
+  const userTimeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getUserTimeZone,
+    () => OFFICE_TIME_ZONE,
+  );
 
   const isOpen = useAppSelector(
     (state) => state.schedule.isBookingDetailsModalOpen,
@@ -95,7 +113,22 @@ export function BookingDetailsModal() {
   const startsAt = new Date(booking.startsAt);
   const endsAt = new Date(booking.endsAt);
 
-  function handleDelete(bookingId: string) {
+  const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
+
+  const userTimeZoneOffset = getTimeZoneOffsetLabel(userTimeZone, startsAt);
+
+  const officeTimeZoneOffset = getTimeZoneOffsetLabel(
+    OFFICE_TIME_ZONE,
+    startsAt,
+  );
+
+  function handleDelete(bookingId: string, bookingTitle: string) {
+    const isConfirmed = window.confirm(`Cancel booking "${bookingTitle}"?`);
+
+    if (!isConfirmed) {
+      return;
+    }
+
     deleteBookingMutation.mutate(bookingId);
   }
 
@@ -135,26 +168,49 @@ export function BookingDetailsModal() {
           <div className={styles.detail}>
             <span className={styles.detailLabel}>Title</span>
 
-            <strong className={styles.detailValue}>{booking.title}</strong>
+            <strong className={styles.detailValue} title={booking.title}>
+              {booking.title}
+            </strong>
           </div>
 
           <div className={styles.detailsGrid}>
             <div className={styles.detail}>
-              <span className={styles.detailLabel}>Date</span>
+              <span className={styles.detailLabel}>Your date</span>
 
               <strong className={styles.detailValue}>
-                {format(startsAt, "dd.MM.yyyy")}
+                {formatInUserTimeZone(startsAt, "dd.MM.yyyy", userTimeZone)}
               </strong>
             </div>
 
             <div className={styles.detail}>
-              <span className={styles.detailLabel}>Time</span>
+              <span className={styles.detailLabel}>Your time</span>
 
               <strong className={styles.detailValue}>
-                {format(startsAt, "HH:mm")}–{format(endsAt, "HH:mm")}
+                {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
+                {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
               </strong>
             </div>
           </div>
+
+          {!userUsesOfficeTimeZone && (
+            <div className={styles.officeTime}>
+              <span className={styles.officeTimeLabel}>Office time</span>
+
+              <strong className={styles.officeTimeValue}>
+                {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}
+                {" – "}
+                {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+              </strong>
+
+              <span className={styles.officeTimeZone}>
+                {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+              </span>
+            </div>
+          )}
+
+          <p className={styles.timeZoneHint}>
+            Times are shown in {userTimeZone} ({userTimeZoneOffset}).
+          </p>
         </div>
 
         <footer className={styles.footer}>
@@ -171,7 +227,7 @@ export function BookingDetailsModal() {
             className={styles.deleteButton}
             type="button"
             disabled={deleteBookingMutation.isPending}
-            onClick={() => handleDelete(booking.id)}
+            onClick={() => handleDelete(booking.id, booking.title)}
           >
             {deleteBookingMutation.isPending
               ? "Cancelling..."

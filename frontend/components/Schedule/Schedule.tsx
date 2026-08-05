@@ -1,20 +1,34 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   addDays,
   addMinutes,
-  addWeeks,
   differenceInCalendarDays,
   differenceInMinutes,
-  format,
-  isSameDay,
-  startOfDay,
-  startOfWeek,
-  subWeeks,
 } from "date-fns";
 
+import {
+  formatInOfficeTimeZone,
+  formatInUserTimeZone,
+  getNextOfficeWeek,
+  getOfficeSlotStart,
+  getOfficeWeekDays,
+  getOfficeWeekEnd,
+  getOfficeWeekStart,
+  getOfficeWorkdayEnd,
+  getOfficeWorkdayStart,
+  getPreviousOfficeWeek,
+  getSlotsCount,
+  getTimeZoneOffsetLabel,
+  getUserTimeZone,
+  isOfficeTimeZone,
+  OFFICE_TIME_ZONE,
+  SLOT_DURATION_MINUTES,
+  toOfficeDate,
+  WEEK_DAYS_COUNT,
+} from "@/lib/date-time";
 import { currentUserQueryOptions } from "@/queries/auth-queries";
 import { bookingsQueryOptions } from "@/queries/booking-queries";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -25,11 +39,11 @@ import {
 
 import styles from "./Schedule.module.css";
 
-const WORKING_DAY_START_HOUR = 9;
-const WORKING_DAY_END_HOUR = 19;
-const SLOT_DURATION_MINUTES = 30;
 const SLOT_HEIGHT_PX = 32;
-const WEEK_DAYS_COUNT = 7;
+
+function subscribeToTimeZone() {
+  return () => {};
+}
 
 export function Schedule() {
   const dispatch = useAppDispatch();
@@ -38,13 +52,17 @@ export function Schedule() {
     (state) => state.schedule.selectedRoomId,
   );
 
-  const [weekStart, setWeekStart] = useState(() =>
-    startOfWeek(new Date(), {
-      weekStartsOn: 1,
-    }),
+  const userTimeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getUserTimeZone,
+    () => OFFICE_TIME_ZONE,
   );
 
-  const weekEnd = addDays(weekStart, WEEK_DAYS_COUNT);
+  const [weekStart, setWeekStart] = useState(() =>
+    getOfficeWeekStart(new Date()),
+  );
+
+  const weekEnd = getOfficeWeekEnd(weekStart);
 
   const start = weekStart.toISOString();
   const end = weekEnd.toISOString();
@@ -67,19 +85,15 @@ export function Schedule() {
   } = useQuery(currentUserQueryOptions);
 
   function handlePreviousWeek() {
-    setWeekStart((currentWeekStart) => subWeeks(currentWeekStart, 1));
+    setWeekStart((currentWeekStart) => getPreviousOfficeWeek(currentWeekStart));
   }
 
   function handleCurrentWeek() {
-    setWeekStart(
-      startOfWeek(new Date(), {
-        weekStartsOn: 1,
-      }),
-    );
+    setWeekStart(getOfficeWeekStart(new Date()));
   }
 
   function handleNextWeek() {
-    setWeekStart((currentWeekStart) => addWeeks(currentWeekStart, 1));
+    setWeekStart((currentWeekStart) => getNextOfficeWeek(currentWeekStart));
   }
 
   function handleSlotClick(slotStart: Date) {
@@ -110,52 +124,59 @@ export function Schedule() {
     return <p className={styles.state}>Failed to load schedule</p>;
   }
 
-  const weekDays = Array.from(
-    {
-      length: WEEK_DAYS_COUNT,
-    },
-    (_, dayIndex) => addDays(weekStart, dayIndex),
-  );
+  const now = new Date();
 
-  const slotsCount =
-    ((WORKING_DAY_END_HOUR - WORKING_DAY_START_HOUR) * 60) /
-    SLOT_DURATION_MINUTES;
+  const officeNow = toOfficeDate(now);
+
+  const weekDays = getOfficeWeekDays(weekStart);
+
+  const slotsCount = getSlotsCount();
 
   const scheduleHeight = slotsCount * SLOT_HEIGHT_PX;
 
-  const timeScaleStart = startOfDay(new Date());
-
-  timeScaleStart.setHours(WORKING_DAY_START_HOUR, 0, 0, 0);
+  const firstOfficeWorkdayStart = getOfficeWorkdayStart(weekDays[0]);
 
   const timeLabels = Array.from(
     {
       length: slotsCount + 1,
     },
     (_, labelIndex) =>
-      addMinutes(timeScaleStart, labelIndex * SLOT_DURATION_MINUTES),
+      addMinutes(firstOfficeWorkdayStart, labelIndex * SLOT_DURATION_MINUTES),
   );
 
-  const now = new Date();
+  const currentDayIndex = differenceInCalendarDays(officeNow, weekStart);
 
-  const currentDayIndex = weekDays.findIndex((day) => isSameDay(day, now));
+  const currentOfficeDay =
+    currentDayIndex >= 0 && currentDayIndex < WEEK_DAYS_COUNT
+      ? weekDays[currentDayIndex]
+      : null;
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentOfficeWorkdayStart = currentOfficeDay
+    ? getOfficeWorkdayStart(currentOfficeDay)
+    : null;
 
-  const workingDayStartMinutes = WORKING_DAY_START_HOUR * 60;
-
-  const workingDayEndMinutes = WORKING_DAY_END_HOUR * 60;
+  const currentOfficeWorkdayEnd = currentOfficeDay
+    ? getOfficeWorkdayEnd(currentOfficeDay)
+    : null;
 
   const isCurrentTimeVisible =
-    currentDayIndex !== -1 &&
-    currentMinutes >= workingDayStartMinutes &&
-    currentMinutes <= workingDayEndMinutes;
+    currentOfficeDay !== null &&
+    currentOfficeWorkdayStart !== null &&
+    currentOfficeWorkdayEnd !== null &&
+    now >= currentOfficeWorkdayStart &&
+    now <= currentOfficeWorkdayEnd;
 
   const currentTimeTop =
-    ((currentMinutes - workingDayStartMinutes) / SLOT_DURATION_MINUTES) *
-    SLOT_HEIGHT_PX;
+    currentOfficeWorkdayStart === null
+      ? 0
+      : (differenceInMinutes(now, currentOfficeWorkdayStart) /
+          SLOT_DURATION_MINUTES) *
+        SLOT_HEIGHT_PX;
 
   const currentDayLeft =
-    currentDayIndex === -1 ? 0 : (currentDayIndex / WEEK_DAYS_COUNT) * 100;
+    currentDayIndex < 0 || currentDayIndex >= WEEK_DAYS_COUNT
+      ? 0
+      : (currentDayIndex / WEEK_DAYS_COUNT) * 100;
 
   const dayColumnWidth = 100 / WEEK_DAYS_COUNT;
 
@@ -165,24 +186,27 @@ export function Schedule() {
 
   const visibleRoomBookings = roomBookings.filter((booking) => {
     const bookingStart = new Date(booking.startsAt);
+
     const bookingEnd = new Date(booking.endsAt);
 
+    const bookingOfficeDate = toOfficeDate(bookingStart);
+
     const bookingDayIndex = differenceInCalendarDays(
-      startOfDay(bookingStart),
-      startOfDay(weekStart),
+      bookingOfficeDate,
+      weekStart,
     );
 
-    const bookingStartMinutes =
-      bookingStart.getHours() * 60 + bookingStart.getMinutes();
+    if (bookingDayIndex < 0 || bookingDayIndex >= WEEK_DAYS_COUNT) {
+      return false;
+    }
 
-    const bookingEndMinutes =
-      bookingEnd.getHours() * 60 + bookingEnd.getMinutes();
+    const bookingOfficeWorkdayStart = getOfficeWorkdayStart(bookingOfficeDate);
+
+    const bookingOfficeWorkdayEnd = getOfficeWorkdayEnd(bookingOfficeDate);
 
     return (
-      bookingDayIndex >= 0 &&
-      bookingDayIndex < WEEK_DAYS_COUNT &&
-      bookingStartMinutes >= workingDayStartMinutes &&
-      bookingEndMinutes <= workingDayEndMinutes
+      bookingStart >= bookingOfficeWorkdayStart &&
+      bookingEnd <= bookingOfficeWorkdayEnd
     );
   });
 
@@ -191,6 +215,12 @@ export function Schedule() {
     "--slots-count": slotsCount,
     "--slot-height": `${SLOT_HEIGHT_PX}px`,
   } as CSSProperties;
+
+  const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
+
+  const userTimeZoneOffset = getTimeZoneOffsetLabel(userTimeZone, now);
+
+  const officeTimeZoneOffset = getTimeZoneOffsetLabel(OFFICE_TIME_ZONE, now);
 
   return (
     <section className={styles.schedule}>
@@ -222,29 +252,104 @@ export function Schedule() {
         </div>
 
         <h2 className={styles.title}>
-          {format(weekStart, "dd.MM.yyyy")} –{" "}
-          {format(addDays(weekStart, WEEK_DAYS_COUNT - 1), "dd.MM.yyyy")}
+          {formatInOfficeTimeZone(weekStart, "dd.MM.yyyy")} –{" "}
+          {formatInOfficeTimeZone(
+            addDays(weekStart, WEEK_DAYS_COUNT - 1),
+            "dd.MM.yyyy",
+          )}
         </h2>
       </header>
+
+      <div className={styles.timeZoneNotice}>
+        {userUsesOfficeTimeZone ? (
+          <p className={styles.timeZoneText}>
+            Times are shown in <strong>{OFFICE_TIME_ZONE}</strong> (
+            {officeTimeZoneOffset}).
+          </p>
+        ) : (
+          <>
+            <p className={styles.timeZoneText}>
+              Schedule times are shown in your time zone:{" "}
+              <strong>{userTimeZone}</strong> ({userTimeZoneOffset}).
+            </p>
+
+            <p className={styles.timeZoneSecondary}>
+              Each column represents an office working day: 09:00–19:00 in{" "}
+              {OFFICE_TIME_ZONE} ({officeTimeZoneOffset}). A working day may
+              cross midnight in your local time.
+            </p>
+          </>
+        )}
+      </div>
 
       <div className={styles.scheduleWrapper}>
         <div className={styles.scheduleContent}>
           <div className={styles.daysHeader}>
             <div className={styles.headerCorner} />
 
-            {weekDays.map((day) => {
-              const isToday = isSameDay(day, now);
+            {weekDays.map((officeDay) => {
+              const officeWorkdayStart = getOfficeWorkdayStart(officeDay);
+
+              const officeWorkdayEnd = getOfficeWorkdayEnd(officeDay);
+
+              const isToday =
+                differenceInCalendarDays(officeDay, officeNow) === 0;
+
+              const officeDateKey = formatInOfficeTimeZone(
+                officeDay,
+                "yyyy-MM-dd",
+              );
+
+              const localStartDateKey = formatInUserTimeZone(
+                officeWorkdayStart,
+                "yyyy-MM-dd",
+                userTimeZone,
+              );
+
+              const localEndDateKey = formatInUserTimeZone(
+                officeWorkdayEnd,
+                "yyyy-MM-dd",
+                userTimeZone,
+              );
+
+              const shouldShowLocalRange =
+                !userUsesOfficeTimeZone &&
+                (localStartDateKey !== officeDateKey ||
+                  localEndDateKey !== officeDateKey);
 
               return (
                 <div
                   className={`${styles.dayHeader} ${
                     isToday ? styles.todayHeader : ""
                   }`}
-                  key={day.toISOString()}
+                  key={officeDay.toISOString()}
                 >
-                  <span className={styles.dayName}>{format(day, "EEE")}</span>
+                  <div className={styles.officeDay}>
+                    <span className={styles.dayName}>
+                      {formatInOfficeTimeZone(officeDay, "EEE")}
+                    </span>
 
-                  <span className={styles.dayDate}>{format(day, "dd.MM")}</span>
+                    <span className={styles.dayDate}>
+                      {formatInOfficeTimeZone(officeDay, "dd.MM")}
+                    </span>
+                  </div>
+
+                  {shouldShowLocalRange && (
+                    <span className={styles.localTimeRange}>
+                      {formatInUserTimeZone(
+                        officeWorkdayStart,
+                        "EEE dd.MM, HH:mm",
+                        userTimeZone,
+                      )}
+                      {" – "}
+                      {formatInUserTimeZone(
+                        officeWorkdayEnd,
+                        "EEE dd.MM, HH:mm",
+                        userTimeZone,
+                      )}
+                      {" local"}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -265,7 +370,7 @@ export function Schedule() {
                     top: labelIndex * SLOT_HEIGHT_PX,
                   }}
                 >
-                  {format(timeLabel, "HH:mm")}
+                  {formatInUserTimeZone(timeLabel, "HH:mm", userTimeZone)}
                 </span>
               ))}
             </div>
@@ -286,13 +391,9 @@ export function Schedule() {
 
                   const slotIndex = Math.floor(cellIndex / WEEK_DAYS_COUNT);
 
-                  const slotDay = weekDays[dayIndex];
+                  const officeDay = weekDays[dayIndex];
 
-                  const slotStart = startOfDay(slotDay);
-
-                  slotStart.setHours(WORKING_DAY_START_HOUR, 0, 0, 0);
-
-                  slotStart.setMinutes(slotIndex * SLOT_DURATION_MINUTES);
+                  const slotStart = getOfficeSlotStart(officeDay, slotIndex);
 
                   const slotEnd = addMinutes(slotStart, SLOT_DURATION_MINUTES);
 
@@ -305,6 +406,7 @@ export function Schedule() {
                   });
 
                   const isPast = slotStart < now;
+
                   const isDisabled = isOccupied || isPast;
 
                   return (
@@ -315,9 +417,10 @@ export function Schedule() {
                       disabled={isDisabled}
                       key={`${dayIndex}-${slotIndex}`}
                       type="button"
-                      aria-label={`Book ${format(
+                      aria-label={`Book ${formatInUserTimeZone(
                         slotStart,
                         "dd.MM.yyyy HH:mm",
+                        userTimeZone,
                       )}`}
                       onClick={() => handleSlotClick(slotStart)}
                     />
@@ -325,7 +428,7 @@ export function Schedule() {
                 },
               )}
 
-              {currentDayIndex !== -1 && (
+              {currentDayIndex >= 0 && currentDayIndex < WEEK_DAYS_COUNT && (
                 <div
                   className={styles.todayColumn}
                   style={{
@@ -353,33 +456,28 @@ export function Schedule() {
 
                 const bookingEnd = new Date(booking.endsAt);
 
-                const isOwnBooking = booking.user.id === currentUser?.id;
+                const bookingOfficeDate = toOfficeDate(bookingStart);
 
-                const canCancelBooking = isOwnBooking && bookingStart > now;
-
-                const dayIndex = differenceInCalendarDays(
-                  startOfDay(bookingStart),
-                  startOfDay(weekStart),
+                const bookingDayIndex = differenceInCalendarDays(
+                  bookingOfficeDate,
+                  weekStart,
                 );
 
-                const bookingWorkingDayStart = new Date(bookingStart);
-
-                bookingWorkingDayStart.setHours(
-                  WORKING_DAY_START_HOUR,
-                  0,
-                  0,
-                  0,
-                );
+                const bookingOfficeWorkdayStart =
+                  getOfficeWorkdayStart(bookingOfficeDate);
 
                 const minutesFromWorkingDayStart = differenceInMinutes(
                   bookingStart,
-                  bookingWorkingDayStart,
+                  bookingOfficeWorkdayStart,
                 );
 
                 const durationMinutes = differenceInMinutes(
                   bookingEnd,
                   bookingStart,
                 );
+
+                const isCompactBooking =
+                  durationMinutes === SLOT_DURATION_MINUTES;
 
                 const top =
                   (minutesFromWorkingDayStart / SLOT_DURATION_MINUTES) *
@@ -388,28 +486,58 @@ export function Schedule() {
                 const height =
                   (durationMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX;
 
-                const left = (dayIndex / WEEK_DAYS_COUNT) * 100;
+                const left = (bookingDayIndex / WEEK_DAYS_COUNT) * 100;
 
                 const width = 100 / WEEK_DAYS_COUNT;
 
+                const isOwnBooking = booking.user.id === currentUser?.id;
+
+                const canCancelBooking = isOwnBooking && bookingStart > now;
+
                 const bookingClassName = `${styles.booking} ${
                   isOwnBooking ? styles.ownBooking : styles.otherBooking
-                } ${canCancelBooking ? styles.clickableBooking : ""}`;
+                } ${canCancelBooking ? styles.clickableBooking : ""} ${
+                  isCompactBooking ? styles.compactBooking : ""
+                }`;
+
+                const formattedBookingTime = `${formatInUserTimeZone(
+                  bookingStart,
+                  "HH:mm",
+                  userTimeZone,
+                )}–${formatInUserTimeZone(bookingEnd, "HH:mm", userTimeZone)}`;
+
+                const bookingAuthor = isOwnBooking ? "You" : booking.user.name;
 
                 const bookingContent = (
                   <>
-                    <strong className={styles.bookingTitle}>
+                    <strong
+                      className={styles.bookingTitle}
+                      title={booking.title}
+                    >
                       {booking.title}
                     </strong>
 
-                    <span className={styles.bookingTime}>
-                      {format(bookingStart, "HH:mm")}–
-                      {format(bookingEnd, "HH:mm")}
-                    </span>
+                    {isCompactBooking ? (
+                      <span className={styles.compactBookingDetails}>
+                        <span>{formattedBookingTime}</span>
 
-                    <span className={styles.bookingAuthor}>
-                      {isOwnBooking ? "You" : booking.user.name}
-                    </span>
+                        <span aria-hidden="true">·</span>
+
+                        <span className={styles.compactBookingAuthor}>
+                          {bookingAuthor}
+                        </span>
+                      </span>
+                    ) : (
+                      <>
+                        <span className={styles.bookingTime}>
+                          {formattedBookingTime}
+                        </span>
+
+                        <span className={styles.bookingAuthor}>
+                          {bookingAuthor}
+                        </span>
+                      </>
+                    )}
                   </>
                 );
 
