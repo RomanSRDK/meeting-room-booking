@@ -2,7 +2,10 @@ import createHttpError from "http-errors";
 
 import { Prisma } from "../../generated/prisma/client.ts";
 import { prisma } from "../lib/prisma.ts";
-import type { CreateBookingInput } from "../types/booking.types.ts";
+import type {
+  CreateBookingInput,
+  GetMyBookingsInput,
+} from "../types/booking.types.ts";
 
 const MAX_TRANSACTION_RETRIES = 3;
 
@@ -143,30 +146,80 @@ export async function createBookingService({
   throw createHttpError(409, "Booking conflict occurred. Please try again");
 }
 
-export async function getMyBookingsService(userId: string) {
-  return prisma.booking.findMany({
-    where: {
-      userId,
-    },
-    select: {
-      id: true,
-      title: true,
-      startsAt: true,
-      endsAt: true,
-      createdAt: true,
-      room: {
-        select: {
-          id: true,
-          name: true,
-          floor: true,
-          capacity: true,
+export async function getMyBookingsService({
+  userId,
+  status,
+  page,
+  limit,
+}: GetMyBookingsInput) {
+  const now = new Date();
+
+  const where =
+    status === "upcoming"
+      ? {
+          userId,
+          endsAt: {
+            gt: now,
+          },
+        }
+      : {
+          userId,
+          endsAt: {
+            lte: now,
+          },
+        };
+
+  const orderBy =
+    status === "upcoming"
+      ? {
+          startsAt: "asc" as const,
+        }
+      : {
+          startsAt: "desc" as const,
+        };
+
+  const skip = (page - 1) * limit;
+
+  const [items, totalItems] = await prisma.$transaction([
+    prisma.booking.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        endsAt: true,
+        createdAt: true,
+        room: {
+          select: {
+            id: true,
+            name: true,
+            floor: true,
+            capacity: true,
+          },
         },
       },
+      orderBy,
+      skip,
+      take: limit,
+    }),
+
+    prisma.booking.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+      hasNextPage: page < totalPages,
     },
-    orderBy: {
-      startsAt: "asc",
-    },
-  });
+  };
 }
 
 export async function deleteBookingService(bookingId: string, userId: string) {

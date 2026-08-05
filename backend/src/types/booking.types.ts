@@ -3,6 +3,21 @@ export type GetBookingsQuery = {
   end: string;
 };
 
+export type MyBookingsStatus = "upcoming" | "past";
+
+export type GetMyBookingsQuery = {
+  status: MyBookingsStatus;
+  page?: string;
+  limit?: string;
+};
+
+export type GetMyBookingsInput = {
+  userId: string;
+  status: MyBookingsStatus;
+  page: number;
+  limit: number;
+};
+
 export type CreateBookingBody = {
   title: string;
   roomId: string;

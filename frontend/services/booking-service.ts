@@ -4,9 +4,16 @@ import type {
   BookingResponse,
   BookingsResponse,
   CreateBookingPayload,
-  MyBooking,
   MyBookingsResponse,
+  MyBookingsStatus,
+  PaginatedMyBookings,
 } from "@/types/booking";
+
+type GetMyBookingsParams = {
+  status: MyBookingsStatus;
+  page: number;
+  limit: number;
+};
 
 type GetBookingsParams = {
   start: string;
@@ -27,8 +34,18 @@ export async function getBookings({
   return response.data.data;
 }
 
-export async function getMyBookings(): Promise<MyBooking[]> {
-  const response = await apiClient.get<MyBookingsResponse>("/bookings/my");
+export async function getMyBookings({
+  status,
+  page,
+  limit,
+}: GetMyBookingsParams): Promise<PaginatedMyBookings> {
+  const response = await apiClient.get<MyBookingsResponse>("/bookings/my", {
+    params: {
+      status,
+      page,
+      limit,
+    },
+  });
 
   return response.data.data;
 }

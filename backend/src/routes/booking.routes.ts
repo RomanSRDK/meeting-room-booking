@@ -10,6 +10,7 @@ import {
   bookingParamsSchema,
   createBookingSchema,
   getBookingsQuerySchema,
+  getMyBookingsQuerySchema,
 } from "../validations/booking.validation.ts";
 import { authenticate } from "../middlewares/auth.middleware.ts";
 import { validateBody } from "../middlewares/validate-body.middleware.ts";
@@ -17,7 +18,12 @@ import { validateParams } from "../middlewares/validate-params.middleware.ts";
 
 export const bookingRouter = Router();
 
-bookingRouter.get("/my", authenticate, getMyBookings);
+bookingRouter.get(
+  "/my",
+  authenticate,
+  validateQuery(getMyBookingsQuerySchema),
+  getMyBookings,
+);
 
 bookingRouter.get("/", validateQuery(getBookingsQuerySchema), getBookings);
 

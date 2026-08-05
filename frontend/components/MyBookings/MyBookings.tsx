@@ -1,12 +1,17 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { compareAsc, compareDesc } from "date-fns";
-import toast from "react-hot-toast";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
+import { BackButton } from "@/components/BackButton/BackButton";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
@@ -15,11 +20,13 @@ import {
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
-import { myBookingsQueryOptions } from "@/queries/booking-queries";
+import {
+  myPastBookingsInfiniteQueryOptions,
+  myUpcomingBookingsQueryOptions,
+} from "@/queries/booking-queries";
 import { deleteBooking } from "@/services/booking-service";
 
 import styles from "./MyBookings.module.css";
-import { BackButton } from "../BackButton/BackButton";
 
 type ApiErrorResponse = {
   message?: string;
@@ -48,10 +55,19 @@ export function MyBookings() {
   );
 
   const {
-    data: bookings,
-    isPending,
-    isError,
-  } = useQuery(myBookingsQueryOptions);
+    data: upcomingBookingsData,
+    isPending: isUpcomingBookingsPending,
+    isError: isUpcomingBookingsError,
+  } = useQuery(myUpcomingBookingsQueryOptions);
+
+  const {
+    data: pastBookingsData,
+    isPending: isPastBookingsPending,
+    isError: isPastBookingsError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery(myPastBookingsInfiniteQueryOptions);
 
   const deleteBookingMutation = useMutation({
     mutationFn: deleteBooking,
@@ -72,33 +88,24 @@ export function MyBookings() {
     },
   });
 
-  if (isPending) {
+  if (isUpcomingBookingsPending || isPastBookingsPending) {
     return <p className={styles.state}>Loading bookings...</p>;
   }
 
-  if (isError) {
+  if (isUpcomingBookingsError || isPastBookingsError) {
     return <p className={styles.state}>Failed to load bookings</p>;
   }
 
   const now = new Date();
 
-  const upcomingBookings = bookings
-    .filter((booking) => new Date(booking.startsAt) > now)
-    .sort((firstBooking, secondBooking) =>
-      compareAsc(
-        new Date(firstBooking.startsAt),
-        new Date(secondBooking.startsAt),
-      ),
-    );
+  const upcomingBookings = upcomingBookingsData.items;
 
-  const pastBookings = bookings
-    .filter((booking) => new Date(booking.startsAt) <= now)
-    .sort((firstBooking, secondBooking) =>
-      compareDesc(
-        new Date(firstBooking.startsAt),
-        new Date(secondBooking.startsAt),
-      ),
-    );
+  const upcomingBookingsCount = upcomingBookingsData.pagination.totalItems;
+
+  const pastBookings = pastBookingsData.pages.flatMap((page) => page.items);
+
+  const pastBookingsCount =
+    pastBookingsData.pages[0]?.pagination.totalItems ?? 0;
 
   const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
 
@@ -112,6 +119,10 @@ export function MyBookings() {
     }
 
     deleteBookingMutation.mutate(bookingId);
+  }
+
+  function handleLoadMore() {
+    void fetchNextPage();
   }
 
   return (
@@ -138,7 +149,7 @@ export function MyBookings() {
 
         <div className={styles.counter}>
           <strong className={styles.counterValue}>
-            {upcomingBookings.length}
+            {upcomingBookingsCount}
           </strong>
 
           <span className={styles.counterLabel}>Upcoming</span>
@@ -149,7 +160,7 @@ export function MyBookings() {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Upcoming bookings</h2>
 
-          <span className={styles.sectionCount}>{upcomingBookings.length}</span>
+          <span className={styles.sectionCount}>{upcomingBookingsCount}</span>
         </div>
 
         {upcomingBookings.length === 0 ? (
@@ -211,7 +222,8 @@ export function MyBookings() {
                             "HH:mm",
                             userTimeZone,
                           )}
-                          –{formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
+                          {" – "}
+                          {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
                         </dd>
                       </div>
 
@@ -266,9 +278,9 @@ export function MyBookings() {
                       className={styles.cancelButton}
                       type="button"
                       disabled={deleteBookingMutation.isPending}
-                      onClick={() =>
-                        handleCancelBooking(booking.id, booking.title)
-                      }
+                      onClick={() => {
+                        handleCancelBooking(booking.id, booking.title);
+                      }}
                     >
                       {isDeleting ? "Cancelling..." : "Cancel booking"}
                     </button>
@@ -284,7 +296,7 @@ export function MyBookings() {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Previous bookings</h2>
 
-          <span className={styles.sectionCount}>{pastBookings.length}</span>
+          <span className={styles.sectionCount}>{pastBookingsCount}</span>
         </div>
 
         {pastBookings.length === 0 ? (
@@ -296,101 +308,126 @@ export function MyBookings() {
             </p>
           </div>
         ) : (
-          <div className={styles.list}>
-            {pastBookings.map((booking) => {
-              const startsAt = new Date(booking.startsAt);
+          <>
+            <div className={styles.list}>
+              {pastBookings.map((booking) => {
+                const startsAt = new Date(booking.startsAt);
 
-              const endsAt = new Date(booking.endsAt);
+                const endsAt = new Date(booking.endsAt);
 
-              const officeTimeZoneOffset = getTimeZoneOffsetLabel(
-                OFFICE_TIME_ZONE,
-                startsAt,
-              );
+                const officeTimeZoneOffset = getTimeZoneOffsetLabel(
+                  OFFICE_TIME_ZONE,
+                  startsAt,
+                );
 
-              return (
-                <article
-                  className={`${styles.card} ${styles.pastCard}`}
-                  key={booking.id}
-                >
-                  <div className={styles.cardContent}>
-                    <div className={styles.cardHeader}>
-                      <div>
-                        <h3 className={styles.bookingTitle}>{booking.title}</h3>
+                return (
+                  <article
+                    className={`${styles.card} ${styles.pastCard}`}
+                    key={booking.id}
+                  >
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardHeader}>
+                        <div>
+                          <h3 className={styles.bookingTitle}>
+                            {booking.title}
+                          </h3>
 
-                        <p className={styles.roomName}>{booking.room.name}</p>
+                          <p className={styles.roomName}>{booking.room.name}</p>
+                        </div>
+
+                        <span className={styles.pastBadge}>Previous</span>
                       </div>
 
-                      <span className={styles.pastBadge}>Previous</span>
+                      <dl className={styles.details}>
+                        <div className={styles.detail}>
+                          <dt className={styles.detailLabel}>Your date</dt>
+
+                          <dd className={styles.detailValue}>
+                            {formatInUserTimeZone(
+                              startsAt,
+                              "dd.MM.yyyy",
+                              userTimeZone,
+                            )}
+                          </dd>
+                        </div>
+
+                        <div className={styles.detail}>
+                          <dt className={styles.detailLabel}>Your time</dt>
+
+                          <dd className={styles.detailValue}>
+                            {formatInUserTimeZone(
+                              startsAt,
+                              "HH:mm",
+                              userTimeZone,
+                            )}
+                            {" – "}
+                            {formatInUserTimeZone(
+                              endsAt,
+                              "HH:mm",
+                              userTimeZone,
+                            )}
+                          </dd>
+                        </div>
+
+                        <div className={styles.detail}>
+                          <dt className={styles.detailLabel}>Floor</dt>
+
+                          <dd className={styles.detailValue}>
+                            {booking.room.floor}
+                          </dd>
+                        </div>
+
+                        <div className={styles.detail}>
+                          <dt className={styles.detailLabel}>Capacity</dt>
+
+                          <dd className={styles.detailValue}>
+                            {booking.room.capacity} people
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {!userUsesOfficeTimeZone && (
+                        <div className={styles.officeTime}>
+                          <span className={styles.officeTimeLabel}>
+                            Office time
+                          </span>
+
+                          <strong className={styles.officeTimeValue}>
+                            {formatInOfficeTimeZone(
+                              startsAt,
+                              "dd.MM.yyyy, HH:mm",
+                            )}
+                            {" – "}
+                            {formatInOfficeTimeZone(
+                              endsAt,
+                              "dd.MM.yyyy, HH:mm",
+                            )}
+                          </strong>
+
+                          <span className={styles.officeTimeZone}>
+                            {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+                          </span>
+                        </div>
+                      )}
                     </div>
+                  </article>
+                );
+              })}
+            </div>
 
-                    <dl className={styles.details}>
-                      <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Your date</dt>
-
-                        <dd className={styles.detailValue}>
-                          {formatInUserTimeZone(
-                            startsAt,
-                            "dd.MM.yyyy",
-                            userTimeZone,
-                          )}
-                        </dd>
-                      </div>
-
-                      <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Your time</dt>
-
-                        <dd className={styles.detailValue}>
-                          {formatInUserTimeZone(
-                            startsAt,
-                            "HH:mm",
-                            userTimeZone,
-                          )}
-                          –{formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
-                        </dd>
-                      </div>
-
-                      <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Floor</dt>
-
-                        <dd className={styles.detailValue}>
-                          {booking.room.floor}
-                        </dd>
-                      </div>
-
-                      <div className={styles.detail}>
-                        <dt className={styles.detailLabel}>Capacity</dt>
-
-                        <dd className={styles.detailValue}>
-                          {booking.room.capacity} people
-                        </dd>
-                      </div>
-                    </dl>
-
-                    {!userUsesOfficeTimeZone && (
-                      <div className={styles.officeTime}>
-                        <span className={styles.officeTimeLabel}>
-                          Office time
-                        </span>
-
-                        <strong className={styles.officeTimeValue}>
-                          {formatInOfficeTimeZone(
-                            startsAt,
-                            "dd.MM.yyyy, HH:mm",
-                          )}
-                          {" – "}
-                          {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
-                        </strong>
-
-                        <span className={styles.officeTimeZone}>
-                          {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+            {hasNextPage && (
+              <div className={styles.loadMoreWrapper}>
+                <button
+                  className={styles.loadMoreButton}
+                  type="button"
+                  disabled={isFetchingNextPage}
+                  onClick={handleLoadMore}
+                >
+                  {isFetchingNextPage ? "Loading..." : "Load more"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </section>

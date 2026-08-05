@@ -9,6 +9,7 @@ import type {
   BookingParams,
   CreateBookingBody,
   GetBookingsQuery,
+  GetMyBookingsQuery,
 } from "../types/booking.types.ts";
 import createHttpError from "http-errors";
 
@@ -80,7 +81,7 @@ export async function createBooking(
 }
 
 export async function getMyBookings(
-  req: Request,
+  req: Request<object, object, object, GetMyBookingsQuery>,
   res: Response,
   next: NextFunction,
 ) {
@@ -89,7 +90,19 @@ export async function getMyBookings(
       throw createHttpError(401, "Authentication required");
     }
 
-    const bookings = await getMyBookingsService(req.userId);
+    const page = Number(req.query.page ?? "1");
+    const limit = Number(req.query.limit ?? "6");
+
+    if (limit > 50) {
+      throw createHttpError(400, "Limit must be less than or equal to 50");
+    }
+
+    const bookings = await getMyBookingsService({
+      userId: req.userId,
+      status: req.query.status,
+      page,
+      limit,
+    });
 
     res.status(200).json({
       status: 200,

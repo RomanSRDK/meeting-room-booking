@@ -346,6 +346,44 @@
   color: var(--color-text-secondary);
 }
 
+.loadMoreWrapper {
+  display: flex;
+  justify-content: center;
+
+  margin-top: 8px;
+}
+
+.loadMoreButton {
+  min-height: 42px;
+  padding: 10px 20px;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+
+  cursor: pointer;
+}
+
+.loadMoreButton:hover:not(:disabled) {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-hover);
+}
+
+.loadMoreButton:focus-visible {
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: 2px;
+}
+
+.loadMoreButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 @media (width <= 800px) {
   .list {
     grid-template-columns: 1fr;

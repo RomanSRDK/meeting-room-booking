@@ -40,10 +40,25 @@ export type BookingResponse = {
   data: Booking;
 };
 
+export type MyBookingsStatus = "upcoming" | "past";
+
+export type MyBookingsPagination = {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+};
+
+export type PaginatedMyBookings = {
+  items: MyBooking[];
+  pagination: MyBookingsPagination;
+};
+
 export type MyBookingsResponse = {
   status: number;
   message: string;
-  data: MyBooking[];
+  data: PaginatedMyBookings;
 };
 
 export type CreateBookingPayload = {
