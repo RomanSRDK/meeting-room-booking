@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { compareAsc, compareDesc } from "date-fns";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 import {
   formatInOfficeTimeZone,
@@ -18,6 +19,7 @@ import { myBookingsQueryOptions } from "@/queries/booking-queries";
 import { deleteBooking } from "@/services/booking-service";
 
 import styles from "./MyBookings.module.css";
+import { BackButton } from "../BackButton/BackButton";
 
 type ApiErrorResponse = {
   message?: string;
@@ -25,6 +27,15 @@ type ApiErrorResponse = {
 
 function subscribeToTimeZone() {
   return () => {};
+}
+
+function getScheduleUrl(roomId: string, startsAt: string): string {
+  const searchParams = new URLSearchParams({
+    roomId,
+    date: startsAt,
+  });
+
+  return `/?${searchParams.toString()}`;
 }
 
 export function MyBookings() {
@@ -106,19 +117,23 @@ export function MyBookings() {
   return (
     <section className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>My bookings</h1>
+        <div className={styles.headerContent}>
+          <BackButton />
 
-          <p className={styles.description}>
-            Review your upcoming and previous room bookings.
-          </p>
+          <div>
+            <h1 className={styles.title}>My bookings</h1>
 
-          <p className={styles.timeZoneNotice}>
-            Times are shown in <strong>{userTimeZone}</strong> (
-            {currentUserTimeZoneOffset}).
-            {!userUsesOfficeTimeZone &&
-              ` Office time is also displayed in ${OFFICE_TIME_ZONE}.`}
-          </p>
+            <p className={styles.description}>
+              Review your upcoming and previous room bookings.
+            </p>
+
+            <p className={styles.timeZoneNotice}>
+              Times are shown in <strong>{userTimeZone}</strong> (
+              {currentUserTimeZoneOffset}).
+              {!userUsesOfficeTimeZone &&
+                ` Office time is also displayed in ${OFFICE_TIME_ZONE}.`}
+            </p>
+          </div>
         </div>
 
         <div className={styles.counter}>
@@ -240,6 +255,13 @@ export function MyBookings() {
                   </div>
 
                   <footer className={styles.cardFooter}>
+                    <Link
+                      className={styles.scheduleLink}
+                      href={getScheduleUrl(booking.room.id, booking.startsAt)}
+                    >
+                      View in schedule
+                    </Link>
+
                     <button
                       className={styles.cancelButton}
                       type="button"

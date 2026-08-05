@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useSyncExternalStore, type CSSProperties } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   addDays,
@@ -8,7 +9,6 @@ import {
   differenceInCalendarDays,
   differenceInMinutes,
 } from "date-fns";
-
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
@@ -36,7 +36,6 @@ import {
   openBookingDetailsModal,
   openBookingModal,
 } from "@/store/slices/schedule-slice";
-
 import styles from "./Schedule.module.css";
 
 const SLOT_HEIGHT_PX = 32;
@@ -45,8 +44,25 @@ function subscribeToTimeZone() {
   return () => {};
 }
 
+function getInitialWeekStart(dateParameter: string | null) {
+  if (!dateParameter) {
+    return getOfficeWeekStart(new Date());
+  }
+
+  const parsedDate = new Date(dateParameter);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return getOfficeWeekStart(new Date());
+  }
+
+  return getOfficeWeekStart(parsedDate);
+}
+
 export function Schedule() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const selectedRoomId = useAppSelector(
     (state) => state.schedule.selectedRoomId,
@@ -58,9 +74,7 @@ export function Schedule() {
     () => OFFICE_TIME_ZONE,
   );
 
-  const [weekStart, setWeekStart] = useState(() =>
-    getOfficeWeekStart(new Date()),
-  );
+  const weekStart = getInitialWeekStart(searchParams.get("date"));
 
   const weekEnd = getOfficeWeekEnd(weekStart);
 
@@ -84,16 +98,30 @@ export function Schedule() {
     isError: isCurrentUserError,
   } = useQuery(currentUserQueryOptions);
 
+  function updateWeekInUrl(nextWeekStart: Date) {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+
+    nextSearchParams.set("date", nextWeekStart.toISOString());
+
+    router.push(`${pathname}?${nextSearchParams.toString()}`);
+  }
+
   function handlePreviousWeek() {
-    setWeekStart((currentWeekStart) => getPreviousOfficeWeek(currentWeekStart));
+    updateWeekInUrl(getPreviousOfficeWeek(weekStart));
   }
 
   function handleCurrentWeek() {
-    setWeekStart(getOfficeWeekStart(new Date()));
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+
+    nextSearchParams.delete("date");
+
+    const queryString = nextSearchParams.toString();
+
+    router.push(queryString ? `${pathname}?${queryString}` : pathname);
   }
 
   function handleNextWeek() {
-    setWeekStart((currentWeekStart) => getNextOfficeWeek(currentWeekStart));
+    updateWeekInUrl(getNextOfficeWeek(weekStart));
   }
 
   function handleSlotClick(slotStart: Date) {

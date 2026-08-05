@@ -11,6 +11,13 @@
   gap: 32px;
 }
 
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .title {
   margin: 0;
 
@@ -237,13 +244,40 @@
 
 .cardFooter {
   display: flex;
-  justify-content: flex-end;
-
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: auto;
   padding: 14px 20px;
-
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-border);
+}
+
+.scheduleLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 38px;
+  padding: 8px 12px;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-medium);
+}
+
+.scheduleLink:hover {
+  border-color: var(--color-border-hover);
+}
+
+.scheduleLink:focus-visible {
+  outline: 3px solid rgb(23 23 23 / 20%);
+  outline-offset: 2px;
 }
 
 .cancelButton {
@@ -335,5 +369,15 @@
 
   .officeTimeValue {
     overflow-wrap: anywhere;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scheduleLink,
+  .cancelButton {
+    width: 100%;
   }
 }
