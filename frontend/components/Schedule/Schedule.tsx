@@ -36,6 +36,7 @@ import {
   openBookingDetailsModal,
   openBookingModal,
 } from "@/store/slices/schedule-slice";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
 import styles from "./Schedule.module.css";
 
 const SLOT_HEIGHT_PX = 32;
@@ -59,6 +60,7 @@ function getInitialWeekStart(dateParameter: string | null) {
 }
 
 export function Schedule() {
+  const now = useCurrentTime();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
@@ -85,6 +87,7 @@ export function Schedule() {
     data: bookings,
     isPending: isBookingsPending,
     isError: isBookingsError,
+    isPlaceholderData,
   } = useQuery(
     bookingsQueryOptions({
       start,
@@ -151,8 +154,6 @@ export function Schedule() {
   if (isBookingsError || isCurrentUserError) {
     return <p className={styles.state}>Failed to load schedule</p>;
   }
-
-  const now = new Date();
 
   const officeNow = toOfficeDate(now);
 
@@ -310,7 +311,11 @@ export function Schedule() {
         )}
       </div>
 
-      <div className={styles.scheduleWrapper}>
+      <div
+        className={`${styles.scheduleWrapper} ${
+          isPlaceholderData ? styles.scheduleUpdating : ""
+        }`}
+      >
         <div className={styles.scheduleContent}>
           <div className={styles.daysHeader}>
             <div className={styles.headerCorner} />

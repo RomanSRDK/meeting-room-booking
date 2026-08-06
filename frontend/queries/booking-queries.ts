@@ -1,4 +1,8 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  infiniteQueryOptions,
+  queryOptions,
+} from "@tanstack/react-query";
 
 import { getBookings, getMyBookings } from "@/services/booking-service";
 
@@ -20,6 +24,7 @@ export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
         start,
         end,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
