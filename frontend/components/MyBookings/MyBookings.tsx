@@ -152,31 +152,34 @@ export function MyBookings() {
             {upcomingBookingsCount}
           </strong>
 
-          <span className={styles.counterLabel}>Upcoming</span>
+          <span className={styles.counterLabel}>Active</span>
         </div>
       </header>
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Upcoming bookings</h2>
+          <h2 className={styles.sectionTitle}>Current and upcoming bookings</h2>
 
           <span className={styles.sectionCount}>{upcomingBookingsCount}</span>
         </div>
 
         {upcomingBookings.length === 0 ? (
           <div className={styles.emptyState}>
-            <h3 className={styles.emptyTitle}>No upcoming bookings</h3>
+            <h3 className={styles.emptyTitle}>
+              No current or upcoming bookings
+            </h3>
 
             <p className={styles.emptyDescription}>
-              Your future room bookings will appear here.
+              Your current and future room bookings will appear here.
             </p>
           </div>
         ) : (
           <div className={styles.list}>
             {upcomingBookings.map((booking) => {
               const startsAt = new Date(booking.startsAt);
-
               const endsAt = new Date(booking.endsAt);
+
+              const isOngoing = startsAt <= now && endsAt > now;
 
               const officeTimeZoneOffset = getTimeZoneOffsetLabel(
                 OFFICE_TIME_ZONE,
@@ -197,7 +200,13 @@ export function MyBookings() {
                         <p className={styles.roomName}>{booking.room.name}</p>
                       </div>
 
-                      <span className={styles.upcomingBadge}>Upcoming</span>
+                      <span
+                        className={
+                          isOngoing ? styles.ongoingBadge : styles.upcomingBadge
+                        }
+                      >
+                        {isOngoing ? "Ongoing" : "Upcoming"}
+                      </span>
                     </div>
 
                     <dl className={styles.details}>

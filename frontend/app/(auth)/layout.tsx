@@ -33,7 +33,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   if (isError) {
-    return null;
+    return (
+      <main>
+        <p>Failed to check authentication</p>
+      </main>
+    );
   }
 
   if (currentUser) {

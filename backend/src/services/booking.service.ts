@@ -230,6 +230,7 @@ export async function deleteBookingService(bookingId: string, userId: string) {
     select: {
       id: true,
       userId: true,
+      endsAt: true,
     },
   });
 
@@ -239,6 +240,10 @@ export async function deleteBookingService(bookingId: string, userId: string) {
 
   if (booking.userId !== userId) {
     throw createHttpError(403, "You are not allowed to delete this booking");
+  }
+
+  if (booking.endsAt <= new Date()) {
+    throw createHttpError(400, "Completed booking cannot be cancelled");
   }
 
   return prisma.booking.delete({

@@ -520,7 +520,7 @@ export function Schedule() {
 
                 const isOwnBooking = booking.user.id === currentUser?.id;
 
-                const canCancelBooking = isOwnBooking && bookingStart > now;
+                const canCancelBooking = isOwnBooking && bookingEnd > now;
 
                 const bookingClassName = `${styles.booking} ${
                   isOwnBooking ? styles.ownBooking : styles.otherBooking

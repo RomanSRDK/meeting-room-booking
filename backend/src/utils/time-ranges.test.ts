@@ -69,4 +69,23 @@ describe("doTimeRangesOverlap", () => {
 
     assert.equal(result, false);
   });
+
+  it("returns false for intervals on adjacent days", () => {
+    const firstStartsAt = new Date("2026-08-06T15:00:00.000Z");
+
+    const firstEndsAt = new Date("2026-08-06T16:00:00.000Z");
+
+    const secondStartsAt = new Date("2026-08-07T06:00:00.000Z");
+
+    const secondEndsAt = new Date("2026-08-07T07:00:00.000Z");
+
+    const result = doTimeRangesOverlap(
+      firstStartsAt,
+      firstEndsAt,
+      secondStartsAt,
+      secondEndsAt,
+    );
+
+    assert.equal(result, false);
+  });
 });

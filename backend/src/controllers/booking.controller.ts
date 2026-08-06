@@ -11,6 +11,7 @@ import type {
   GetBookingsQuery,
   GetMyBookingsQuery,
 } from "../types/booking.types.ts";
+import { validateBookingTime } from "../utils/validate-booking-time.ts";
 import createHttpError from "http-errors";
 
 export async function getBookings(
@@ -54,13 +55,10 @@ export async function createBooking(
     const startsAt = new Date(req.body.startsAt);
     const endsAt = new Date(req.body.endsAt);
 
-    if (startsAt >= endsAt) {
-      throw createHttpError(400, "Start date must be earlier than end date");
-    }
-
-    if (startsAt <= new Date()) {
-      throw createHttpError(400, "Booking start date must be in the future");
-    }
+    validateBookingTime({
+      startsAt,
+      endsAt,
+    });
 
     const booking = await createBookingService({
       title: req.body.title,
