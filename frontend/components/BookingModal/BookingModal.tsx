@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
+import { useSyncExternalStore } from "react";
+import { Modal } from "@/components/Modal/Modal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { addMinutes } from "date-fns";
-import { IoClose } from "react-icons/io5";
 import { Form, Formik } from "formik";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
@@ -101,38 +100,6 @@ export function BookingModal() {
     dispatch(closeBookingModal());
   }
 
-  function handleBackdropClick(event: React.MouseEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-
-    handleClose();
-  }
-
-  useEffect(() => {
-    if (!isBookingModalOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape") {
-        return;
-      }
-
-      if (createBookingMutation.isPending) {
-        return;
-      }
-
-      dispatch(closeBookingModal());
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [dispatch, isBookingModalOpen, createBookingMutation.isPending]);
-
   if (!isBookingModalOpen || !bookingDraft) {
     return null;
   }
@@ -172,51 +139,23 @@ export function BookingModal() {
   const initialDuration = availableDurations[0];
 
   if (initialDuration === undefined) {
-    return createPortal(
-      <div
-        className={styles.backdrop}
-        role="presentation"
-        onMouseDown={handleBackdropClick}
+    return (
+      <Modal
+        title="Slot unavailable"
+        description="This time slot is no longer available."
+        closeButtonLabel="Close booking modal"
+        onClose={handleClose}
       >
-        <section
-          className={styles.modal}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="booking-modal-title"
-        >
-          <header className={styles.header}>
-            <div>
-              <h2 className={styles.title} id="booking-modal-title">
-                Slot unavailable
-              </h2>
-
-              <p className={styles.description}>
-                This time slot is no longer available.
-              </p>
-            </div>
-
-            <button
-              className={styles.closeButton}
-              type="button"
-              aria-label="Close booking modal"
-              onClick={handleClose}
-            >
-              <IoClose />
-            </button>
-          </header>
-
-          <footer className={styles.footer}>
-            <button
-              className={styles.cancelButton}
-              type="button"
-              onClick={handleClose}
-            >
-              Close
-            </button>
-          </footer>
-        </section>
-      </div>,
-      document.body,
+        <footer className={styles.footer}>
+          <button
+            className={styles.cancelButton}
+            type="button"
+            onClick={handleClose}
+          >
+            Close
+          </button>
+        </footer>
+      </Modal>
     );
   }
 
@@ -245,182 +184,150 @@ export function BookingModal() {
     startsAt,
   );
 
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="presentation"
-      onMouseDown={handleBackdropClick}
+  return (
+    <Modal
+      title="Create booking"
+      description="Enter the booking details."
+      closeButtonLabel="Close booking modal"
+      closeDisabled={createBookingMutation.isPending}
+      onClose={handleClose}
     >
-      <section
-        className={styles.modal}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="booking-modal-title"
+      <Formik
+        initialValues={initialValues}
+        validationSchema={bookingValidationSchema}
+        onSubmit={(values) => {
+          const duration = Number(values.duration);
+          const endsAt = addMinutes(startsAt, duration);
+
+          createBookingMutation.mutate({
+            title: values.title.trim(),
+            roomId: bookingDraft.roomId,
+            startsAt: startsAt.toISOString(),
+            endsAt: endsAt.toISOString(),
+          });
+        }}
       >
-        <header className={styles.header}>
-          <div>
-            <h2 className={styles.title} id="booking-modal-title">
-              Create booking
-            </h2>
+        {({ values, errors, touched, handleChange, handleBlur }) => {
+          const duration = Number(values.duration);
+          const endsAt = addMinutes(startsAt, duration);
 
-            <p className={styles.description}>Enter the booking details.</p>
-          </div>
+          return (
+            <Form className={styles.form}>
+              <div className={styles.details}>
+                <div className={styles.detail}>
+                  <span className={styles.detailLabel}>Your date</span>
 
-          <button
-            className={styles.closeButton}
-            type="button"
-            aria-label="Close booking modal"
-            disabled={createBookingMutation.isPending}
-            onClick={handleClose}
-          >
-            <IoClose />
-          </button>
-        </header>
-
-        <Formik
-          initialValues={initialValues}
-          validationSchema={bookingValidationSchema}
-          onSubmit={(values) => {
-            const duration = Number(values.duration);
-            const endsAt = addMinutes(startsAt, duration);
-
-            createBookingMutation.mutate({
-              title: values.title.trim(),
-              roomId: bookingDraft.roomId,
-              startsAt: startsAt.toISOString(),
-              endsAt: endsAt.toISOString(),
-            });
-          }}
-        >
-          {({ values, errors, touched, handleChange, handleBlur }) => {
-            const duration = Number(values.duration);
-            const endsAt = addMinutes(startsAt, duration);
-
-            return (
-              <Form className={styles.form}>
-                <div className={styles.details}>
-                  <div className={styles.detail}>
-                    <span className={styles.detailLabel}>Your date</span>
-
-                    <strong className={styles.detailValue}>
-                      {formatInUserTimeZone(
-                        startsAt,
-                        "dd.MM.yyyy",
-                        userTimeZone,
-                      )}
-                    </strong>
-                  </div>
-
-                  <div className={styles.detail}>
-                    <span className={styles.detailLabel}>Your time</span>
-
-                    <strong className={styles.detailValue}>
-                      {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
-                      {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
-                    </strong>
-                  </div>
+                  <strong className={styles.detailValue}>
+                    {formatInUserTimeZone(startsAt, "dd.MM.yyyy", userTimeZone)}
+                  </strong>
                 </div>
 
-                {!userUsesOfficeTimeZone && (
-                  <div className={styles.officeTime}>
-                    <span className={styles.officeTimeLabel}>Office time</span>
+                <div className={styles.detail}>
+                  <span className={styles.detailLabel}>Your time</span>
 
-                    <strong className={styles.officeTimeValue}>
-                      {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}–
-                      {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
-                    </strong>
+                  <strong className={styles.detailValue}>
+                    {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
+                    {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
+                  </strong>
+                </div>
+              </div>
 
-                    <span className={styles.officeTimeZone}>
-                      {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
-                    </span>
-                  </div>
+              {!userUsesOfficeTimeZone && (
+                <div className={styles.officeTime}>
+                  <span className={styles.officeTimeLabel}>Office time</span>
+
+                  <strong className={styles.officeTimeValue}>
+                    {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}–
+                    {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+                  </strong>
+
+                  <span className={styles.officeTimeZone}>
+                    {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+                  </span>
+                </div>
+              )}
+
+              <p className={styles.timeZoneHint}>
+                Times are shown in {userTimeZone} ({userTimeZoneOffset}).
+              </p>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="booking-title">
+                  Title
+                </label>
+
+                <input
+                  className={`${styles.input} ${
+                    touched.title && errors.title ? styles.inputError : ""
+                  }`}
+                  id="booking-title"
+                  name="title"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="For example: Project discussion"
+                  value={values.title}
+                  disabled={createBookingMutation.isPending}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                />
+
+                {touched.title && errors.title && (
+                  <p className={styles.error}>{errors.title}</p>
                 )}
+              </div>
 
-                <p className={styles.timeZoneHint}>
-                  Times are shown in {userTimeZone} ({userTimeZoneOffset}).
-                </p>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="booking-duration">
+                  Duration
+                </label>
 
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="booking-title">
-                    Title
-                  </label>
+                <select
+                  className={`${styles.select} ${
+                    touched.duration && errors.duration ? styles.inputError : ""
+                  }`}
+                  id="booking-duration"
+                  name="duration"
+                  value={values.duration}
+                  disabled={createBookingMutation.isPending}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                >
+                  {availableDurations.map((durationOption) => (
+                    <option key={durationOption} value={durationOption}>
+                      {formatDuration(durationOption)}
+                    </option>
+                  ))}
+                </select>
 
-                  <input
-                    className={`${styles.input} ${
-                      touched.title && errors.title ? styles.inputError : ""
-                    }`}
-                    id="booking-title"
-                    name="title"
-                    type="text"
-                    autoComplete="off"
-                    placeholder="For example: Project discussion"
-                    value={values.title}
-                    disabled={createBookingMutation.isPending}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  />
+                {touched.duration && errors.duration && (
+                  <p className={styles.error}>{errors.duration}</p>
+                )}
+              </div>
 
-                  {touched.title && errors.title && (
-                    <p className={styles.error}>{errors.title}</p>
-                  )}
-                </div>
+              <footer className={styles.footer}>
+                <button
+                  className={styles.cancelButton}
+                  type="button"
+                  disabled={createBookingMutation.isPending}
+                  onClick={handleClose}
+                >
+                  Cancel
+                </button>
 
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="booking-duration">
-                    Duration
-                  </label>
-
-                  <select
-                    className={`${styles.select} ${
-                      touched.duration && errors.duration
-                        ? styles.inputError
-                        : ""
-                    }`}
-                    id="booking-duration"
-                    name="duration"
-                    value={values.duration}
-                    disabled={createBookingMutation.isPending}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  >
-                    {availableDurations.map((durationOption) => (
-                      <option key={durationOption} value={durationOption}>
-                        {formatDuration(durationOption)}
-                      </option>
-                    ))}
-                  </select>
-
-                  {touched.duration && errors.duration && (
-                    <p className={styles.error}>{errors.duration}</p>
-                  )}
-                </div>
-
-                <footer className={styles.footer}>
-                  <button
-                    className={styles.cancelButton}
-                    type="button"
-                    disabled={createBookingMutation.isPending}
-                    onClick={handleClose}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    className={styles.submitButton}
-                    type="submit"
-                    disabled={createBookingMutation.isPending}
-                  >
-                    {createBookingMutation.isPending
-                      ? "Creating..."
-                      : "Create booking"}
-                  </button>
-                </footer>
-              </Form>
-            );
-          }}
-        </Formik>
-      </section>
-    </div>,
-    document.body,
+                <button
+                  className={styles.submitButton}
+                  type="submit"
+                  disabled={createBookingMutation.isPending}
+                >
+                  {createBookingMutation.isPending
+                    ? "Creating..."
+                    : "Create booking"}
+                </button>
+              </footer>
+            </Form>
+          );
+        }}
+      </Formik>
+    </Modal>
   );
 }

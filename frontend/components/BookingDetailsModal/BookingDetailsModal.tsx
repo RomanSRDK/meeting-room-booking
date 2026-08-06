@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
+import { useSyncExternalStore } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { IoClose } from "react-icons/io5";
 import toast from "react-hot-toast";
 
+import { Modal } from "@/components/Modal/Modal";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
@@ -74,37 +73,15 @@ export function BookingDetailsModal() {
     dispatch(closeBookingDetailsModal());
   }
 
-  function handleBackdropClick(event: React.MouseEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) {
+  function handleDelete(bookingId: string, bookingTitle: string) {
+    const isConfirmed = window.confirm(`Cancel booking "${bookingTitle}"?`);
+
+    if (!isConfirmed) {
       return;
     }
 
-    handleClose();
+    deleteBookingMutation.mutate(bookingId);
   }
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape") {
-        return;
-      }
-
-      if (deleteBookingMutation.isPending) {
-        return;
-      }
-
-      dispatch(closeBookingDetailsModal());
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [dispatch, isOpen, deleteBookingMutation.isPending]);
 
   if (!isOpen || !booking) {
     return null;
@@ -122,120 +99,83 @@ export function BookingDetailsModal() {
     startsAt,
   );
 
-  function handleDelete(bookingId: string, bookingTitle: string) {
-    const isConfirmed = window.confirm(`Cancel booking "${bookingTitle}"?`);
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    deleteBookingMutation.mutate(bookingId);
-  }
-
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="presentation"
-      onMouseDown={handleBackdropClick}
+  return (
+    <Modal
+      title="Booking details"
+      description="Review or cancel your booking."
+      size="wide"
+      closeButtonLabel="Close booking details"
+      closeDisabled={deleteBookingMutation.isPending}
+      onClose={handleClose}
     >
-      <section
-        className={styles.modal}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="booking-details-title"
-      >
-        <header className={styles.header}>
-          <div>
-            <h2 className={styles.title} id="booking-details-title">
-              Booking details
-            </h2>
+      <div className={styles.content}>
+        <div className={styles.detail}>
+          <span className={styles.detailLabel}>Title</span>
 
-            <p className={styles.description}>Review or cancel your booking.</p>
-          </div>
+          <strong className={styles.detailValue} title={booking.title}>
+            {booking.title}
+          </strong>
+        </div>
 
-          <button
-            className={styles.closeButton}
-            type="button"
-            aria-label="Close booking details"
-            disabled={deleteBookingMutation.isPending}
-            onClick={handleClose}
-          >
-            <IoClose />
-          </button>
-        </header>
-
-        <div className={styles.content}>
+        <div className={styles.detailsGrid}>
           <div className={styles.detail}>
-            <span className={styles.detailLabel}>Title</span>
+            <span className={styles.detailLabel}>Your date</span>
 
-            <strong className={styles.detailValue} title={booking.title}>
-              {booking.title}
+            <strong className={styles.detailValue}>
+              {formatInUserTimeZone(startsAt, "dd.MM.yyyy", userTimeZone)}
             </strong>
           </div>
 
-          <div className={styles.detailsGrid}>
-            <div className={styles.detail}>
-              <span className={styles.detailLabel}>Your date</span>
+          <div className={styles.detail}>
+            <span className={styles.detailLabel}>Your time</span>
 
-              <strong className={styles.detailValue}>
-                {formatInUserTimeZone(startsAt, "dd.MM.yyyy", userTimeZone)}
-              </strong>
-            </div>
-
-            <div className={styles.detail}>
-              <span className={styles.detailLabel}>Your time</span>
-
-              <strong className={styles.detailValue}>
-                {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
-                {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
-              </strong>
-            </div>
+            <strong className={styles.detailValue}>
+              {formatInUserTimeZone(startsAt, "HH:mm", userTimeZone)}–
+              {formatInUserTimeZone(endsAt, "HH:mm", userTimeZone)}
+            </strong>
           </div>
-
-          {!userUsesOfficeTimeZone && (
-            <div className={styles.officeTime}>
-              <span className={styles.officeTimeLabel}>Office time</span>
-
-              <strong className={styles.officeTimeValue}>
-                {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}
-                {" – "}
-                {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
-              </strong>
-
-              <span className={styles.officeTimeZone}>
-                {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
-              </span>
-            </div>
-          )}
-
-          <p className={styles.timeZoneHint}>
-            Times are shown in {userTimeZone} ({userTimeZoneOffset}).
-          </p>
         </div>
 
-        <footer className={styles.footer}>
-          <button
-            className={styles.closeAction}
-            type="button"
-            disabled={deleteBookingMutation.isPending}
-            onClick={handleClose}
-          >
-            Close
-          </button>
+        {!userUsesOfficeTimeZone && (
+          <div className={styles.officeTime}>
+            <span className={styles.officeTimeLabel}>Office time</span>
 
-          <button
-            className={styles.deleteButton}
-            type="button"
-            disabled={deleteBookingMutation.isPending}
-            onClick={() => handleDelete(booking.id, booking.title)}
-          >
-            {deleteBookingMutation.isPending
-              ? "Cancelling..."
-              : "Cancel booking"}
-          </button>
-        </footer>
-      </section>
-    </div>,
-    document.body,
+            <strong className={styles.officeTimeValue}>
+              {formatInOfficeTimeZone(startsAt, "dd.MM.yyyy, HH:mm")}
+              {" – "}
+              {formatInOfficeTimeZone(endsAt, "dd.MM.yyyy, HH:mm")}
+            </strong>
+
+            <span className={styles.officeTimeZone}>
+              {OFFICE_TIME_ZONE} ({officeTimeZoneOffset})
+            </span>
+          </div>
+        )}
+
+        <p className={styles.timeZoneHint}>
+          Times are shown in {userTimeZone} ({userTimeZoneOffset}).
+        </p>
+      </div>
+
+      <footer className={styles.footer}>
+        <button
+          className={styles.closeAction}
+          type="button"
+          disabled={deleteBookingMutation.isPending}
+          onClick={handleClose}
+        >
+          Close
+        </button>
+
+        <button
+          className={styles.deleteButton}
+          type="button"
+          disabled={deleteBookingMutation.isPending}
+          onClick={() => handleDelete(booking.id, booking.title)}
+        >
+          {deleteBookingMutation.isPending ? "Cancelling..." : "Cancel booking"}
+        </button>
+      </footer>
+    </Modal>
   );
 }
