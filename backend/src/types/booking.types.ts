@@ -33,6 +33,16 @@ export type CreateBookingInput = {
   endsAt: Date;
 };
 
+export type UpdateBookingTitleBody = {
+  title: string;
+};
+
+export type UpdateBookingTitleInput = {
+  bookingId: string;
+  userId: string;
+  title: string;
+};
+
 export type BookingParams = {
   bookingId: string;
 };

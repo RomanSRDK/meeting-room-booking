@@ -4,12 +4,14 @@ import {
   deleteBookingService,
   getBookingsService,
   getMyBookingsService,
+  updateBookingTitleService,
 } from "../services/booking.service.ts";
 import type {
   BookingParams,
   CreateBookingBody,
   GetBookingsQuery,
   GetMyBookingsQuery,
+  UpdateBookingTitleBody,
 } from "../types/booking.types.ts";
 import { validateBookingTime } from "../utils/validate-booking-time.ts";
 import createHttpError from "http-errors";
@@ -131,6 +133,32 @@ export async function deleteBooking(
       status: 200,
       message: "Booking deleted successfully",
       data: deletedBooking,
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+}
+
+export async function updateBookingTitle(
+  req: Request<BookingParams, object, UpdateBookingTitleBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.userId) {
+      throw createHttpError(401, "Authentication required");
+    }
+
+    const updatedBooking = await updateBookingTitleService({
+      bookingId: req.params.bookingId,
+      userId: req.userId,
+      title: req.body.title,
+    });
+
+    res.status(200).json({
+      status: 200,
+      message: "Booking title updated successfully",
+      data: updatedBooking,
     });
   } catch (error: unknown) {
     next(error);

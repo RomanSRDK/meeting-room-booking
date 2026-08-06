@@ -17,7 +17,7 @@ export function BackButton({ label = "Back" }: BackButtonProps) {
       className={styles.button}
       type="button"
       onClick={() => {
-        router.back();
+        router.push("/");
       }}
     >
       <IoArrowBack className={styles.icon} aria-hidden="true" />

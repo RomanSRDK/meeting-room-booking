@@ -7,6 +7,7 @@ import type {
   MyBookingsResponse,
   MyBookingsStatus,
   PaginatedMyBookings,
+  UpdateBookingTitlePayload,
 } from "@/types/booking";
 
 type GetMyBookingsParams = {
@@ -60,4 +61,18 @@ export async function createBooking(
 
 export async function deleteBooking(bookingId: string): Promise<void> {
   await apiClient.delete(`/bookings/${bookingId}`);
+}
+
+export async function updateBookingTitle({
+  bookingId,
+  title,
+}: UpdateBookingTitlePayload): Promise<Booking> {
+  const response = await apiClient.patch<BookingResponse>(
+    `/bookings/${bookingId}/title`,
+    {
+      title,
+    },
+  );
+
+  return response.data.data;
 }

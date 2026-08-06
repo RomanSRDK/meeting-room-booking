@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.ts";
 import type {
   CreateBookingInput,
   GetMyBookingsInput,
+  UpdateBookingTitleInput,
 } from "../types/booking.types.ts";
 
 const MAX_TRANSACTION_RETRIES = 3;
@@ -253,6 +254,58 @@ export async function deleteBookingService(bookingId: string, userId: string) {
     select: {
       id: true,
       title: true,
+    },
+  });
+}
+
+export async function updateBookingTitleService({
+  bookingId,
+  userId,
+  title,
+}: UpdateBookingTitleInput) {
+  const booking = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+    select: {
+      id: true,
+      userId: true,
+      endsAt: true,
+    },
+  });
+
+  if (!booking) {
+    throw createHttpError(404, "Booking not found");
+  }
+
+  if (booking.userId !== userId) {
+    throw createHttpError(403, "You are not allowed to edit this booking");
+  }
+
+  if (booking.endsAt <= new Date()) {
+    throw createHttpError(400, "Completed booking cannot be edited");
+  }
+
+  return prisma.booking.update({
+    where: {
+      id: bookingId,
+    },
+    data: {
+      title,
+    },
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      endsAt: true,
+      roomId: true,
+      updatedAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 }

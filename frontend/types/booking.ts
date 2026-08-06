@@ -67,3 +67,8 @@ export type CreateBookingPayload = {
   startsAt: string;
   endsAt: string;
 };
+
+export type UpdateBookingTitlePayload = {
+  bookingId: string;
+  title: string;
+};

@@ -1,6 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+} from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import toast from "react-hot-toast";
@@ -14,7 +20,7 @@ import {
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
-import { deleteBooking } from "@/services/booking-service";
+import { deleteBooking, updateBookingTitle } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingDetailsModal } from "@/store/slices/schedule-slice";
 
@@ -32,6 +38,12 @@ export function BookingDetailsModal() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
 
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
+
   const userTimeZone = useSyncExternalStore(
     subscribeToTimeZone,
     getUserTimeZone,
@@ -44,6 +56,15 @@ export function BookingDetailsModal() {
 
   const booking = useAppSelector((state) => state.schedule.selectedBooking);
 
+  useEffect(() => {
+    if (!isEditingTitle) {
+      return;
+    }
+
+    titleInputRef.current?.focus();
+    titleInputRef.current?.select();
+  }, [isEditingTitle]);
+
   const deleteBookingMutation = useMutation({
     mutationFn: deleteBooking,
 
@@ -54,6 +75,7 @@ export function BookingDetailsModal() {
 
       toast.success("Booking cancelled successfully");
 
+      resetEditingState();
       dispatch(closeBookingDetailsModal());
     },
 
@@ -65,12 +87,115 @@ export function BookingDetailsModal() {
     },
   });
 
+  const updateBookingTitleMutation = useMutation({
+    mutationFn: updateBookingTitle,
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["bookings"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["my-bookings"],
+      });
+
+      toast.success("Booking title updated successfully");
+
+      resetEditingState();
+      dispatch(closeBookingDetailsModal());
+    },
+
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      const message =
+        error.response?.data.message ?? "Failed to update booking title";
+
+      toast.error(message);
+    },
+  });
+
+  const isMutationPending =
+    deleteBookingMutation.isPending || updateBookingTitleMutation.isPending;
+
+  function resetEditingState() {
+    setIsEditingTitle(false);
+    setTitle("");
+    setTitleError("");
+  }
+
   function handleClose() {
-    if (deleteBookingMutation.isPending) {
+    if (isMutationPending) {
       return;
     }
 
+    resetEditingState();
     dispatch(closeBookingDetailsModal());
+  }
+
+  function handleStartEditing() {
+    if (!booking) {
+      return;
+    }
+
+    setTitle(booking.title);
+    setTitleError("");
+    setIsEditingTitle(true);
+  }
+
+  function handleTitleChange(nextTitle: string) {
+    setTitle(nextTitle);
+
+    if (titleError) {
+      setTitleError("");
+    }
+  }
+
+  function handleSaveTitle() {
+    if (!booking || updateBookingTitleMutation.isPending) {
+      return;
+    }
+
+    const normalizedTitle = title.trim();
+
+    if (!normalizedTitle) {
+      setTitleError("Title is required");
+      titleInputRef.current?.focus();
+      return;
+    }
+
+    if (normalizedTitle.length > 100) {
+      setTitleError("Title must be 100 characters or fewer");
+      titleInputRef.current?.focus();
+      return;
+    }
+
+    if (normalizedTitle === booking.title) {
+      setIsEditingTitle(false);
+      setTitleError("");
+      return;
+    }
+
+    updateBookingTitleMutation.mutate({
+      bookingId: booking.id,
+      title: normalizedTitle,
+    });
+  }
+
+  function handleTitleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSaveTitle();
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+
+      if (updateBookingTitleMutation.isPending) {
+        return;
+      }
+
+      setIsEditingTitle(false);
+      setTitleError("");
+    }
   }
 
   function handleDelete(bookingId: string, bookingTitle: string) {
@@ -102,19 +227,52 @@ export function BookingDetailsModal() {
   return (
     <Modal
       title="Booking details"
-      description="Review or cancel your booking."
+      description="Review, edit or cancel your booking."
       size="wide"
       closeButtonLabel="Close booking details"
-      closeDisabled={deleteBookingMutation.isPending}
+      closeDisabled={isMutationPending}
       onClose={handleClose}
     >
       <div className={styles.content}>
         <div className={styles.detail}>
-          <span className={styles.detailLabel}>Title</span>
+          <label
+            className={styles.detailLabel}
+            htmlFor={isEditingTitle ? "booking-title" : undefined}
+          >
+            Title
+          </label>
 
-          <strong className={styles.detailValue} title={booking.title}>
-            {booking.title}
-          </strong>
+          {isEditingTitle ? (
+            <>
+              <input
+                ref={titleInputRef}
+                className={styles.titleInput}
+                id="booking-title"
+                name="title"
+                type="text"
+                value={title}
+                maxLength={100}
+                autoComplete="off"
+                disabled={updateBookingTitleMutation.isPending}
+                aria-invalid={Boolean(titleError)}
+                aria-describedby={
+                  titleError ? "booking-title-error" : undefined
+                }
+                onChange={(event) => handleTitleChange(event.target.value)}
+                onKeyDown={handleTitleKeyDown}
+              />
+
+              {titleError && (
+                <p className={styles.titleError} id="booking-title-error">
+                  {titleError}
+                </p>
+              )}
+            </>
+          ) : (
+            <strong className={styles.detailValue} title={booking.title}>
+              {booking.title}
+            </strong>
+          )}
         </div>
 
         <div className={styles.detailsGrid}>
@@ -158,19 +316,30 @@ export function BookingDetailsModal() {
       </div>
 
       <footer className={styles.footer}>
-        <button
-          className={styles.closeAction}
-          type="button"
-          disabled={deleteBookingMutation.isPending}
-          onClick={handleClose}
-        >
-          Close
-        </button>
+        {isEditingTitle ? (
+          <button
+            className={styles.saveButton}
+            type="button"
+            disabled={isMutationPending}
+            onClick={handleSaveTitle}
+          >
+            {updateBookingTitleMutation.isPending ? "Saving..." : "Save title"}
+          </button>
+        ) : (
+          <button
+            className={styles.editButton}
+            type="button"
+            disabled={isMutationPending}
+            onClick={handleStartEditing}
+          >
+            Edit title
+          </button>
+        )}
 
         <button
           className={styles.deleteButton}
           type="button"
-          disabled={deleteBookingMutation.isPending}
+          disabled={isMutationPending}
           onClick={() => handleDelete(booking.id, booking.title)}
         >
           {deleteBookingMutation.isPending ? "Cancelling..." : "Cancel booking"}

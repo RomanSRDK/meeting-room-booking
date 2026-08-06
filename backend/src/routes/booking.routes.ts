@@ -4,6 +4,7 @@ import {
   deleteBooking,
   getBookings,
   getMyBookings,
+  updateBookingTitle,
 } from "../controllers/booking.controller.ts";
 import { validateQuery } from "../middlewares/validate-query.middleware.ts";
 import {
@@ -11,6 +12,7 @@ import {
   createBookingSchema,
   getBookingsQuerySchema,
   getMyBookingsQuerySchema,
+  updateBookingTitleSchema,
 } from "../validations/booking.validation.ts";
 import { authenticate } from "../middlewares/auth.middleware.ts";
 import { validateBody } from "../middlewares/validate-body.middleware.ts";
@@ -39,4 +41,12 @@ bookingRouter.delete(
   authenticate,
   validateParams(bookingParamsSchema),
   deleteBooking,
+);
+
+bookingRouter.patch(
+  "/:bookingId/title",
+  authenticate,
+  validateParams(bookingParamsSchema),
+  validateBody(updateBookingTitleSchema),
+  updateBookingTitle,
 );

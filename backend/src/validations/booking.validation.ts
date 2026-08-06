@@ -12,6 +12,10 @@ export const createBookingSchema = Joi.object({
   endsAt: Joi.string().isoDate().required(),
 }).unknown(false);
 
+export const updateBookingTitleSchema = Joi.object({
+  title: Joi.string().trim().min(1).max(100).required(),
+}).unknown(false);
+
 export const bookingParamsSchema = Joi.object({
   bookingId: Joi.string().uuid().required(),
 }).unknown(false);
