@@ -1,7 +1,10 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "meeting-room-booking-frontend",
+  "description": "Next.js frontend for the meeting room booking application",
+  "version": "1.0.0",
   "private": true,
+  "author": "Roman Serdiuk",
+  "license": "ISC",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -38,9 +41,5 @@
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
     "typescript": "^5"
-  },
-  "allowScripts": {
-    "sharp@0.34.5": true,
-    "unrs-resolver@1.12.2": true
   }
 }
