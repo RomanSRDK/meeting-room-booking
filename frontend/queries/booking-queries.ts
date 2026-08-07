@@ -20,13 +20,10 @@ export const PAST_BOOKINGS_PAGE_SIZE = 6;
 export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
   return queryOptions({
     queryKey: ["bookings", start, end],
-
-    queryFn: () =>
-      getBookings({
-        start,
-        end,
-      }),
+    queryFn: () => getBookings({ start, end }),
     placeholderData: keepPreviousData,
+    // refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
   });
 }
 

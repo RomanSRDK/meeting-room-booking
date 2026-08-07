@@ -93,17 +93,27 @@ export function BookingModal() {
       dispatch(closeBookingModal());
     },
 
-    onError: (error: AxiosError<ApiErrorResponse>) => {
-      const message =
-        error.response?.data.message ?? "Failed to create booking";
-
-      toast.error(message, {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
+    onError: async (error: AxiosError<ApiErrorResponse>) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["bookings"],
       });
+
+      if (error.response?.status === 409) {
+        const message =
+          error.response?.status === 409
+            ? "Oops! This time is no longer available. Please choose another time"
+            : "Something went wrong. Please try again";
+        toast(message, {
+          icon: "😞",
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+
+        dispatch(closeBookingModal());
+      }
     },
   });
 
@@ -156,24 +166,7 @@ export function BookingModal() {
   const initialDuration = availableDurations[0];
 
   if (initialDuration === undefined) {
-    return (
-      <Modal
-        title="Slot unavailable"
-        description={selectedRoom ? `Room: ${selectedRoom.name}` : undefined}
-        closeButtonLabel="Close booking modal"
-        onClose={handleClose}
-      >
-        <footer className={styles.footer}>
-          <button
-            className={styles.cancelButton}
-            type="button"
-            onClick={handleClose}
-          >
-            Close
-          </button>
-        </footer>
-      </Modal>
-    );
+    return null;
   }
 
   const initialValues: BookingFormValues = {
