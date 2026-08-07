@@ -73,7 +73,13 @@ export function BookingDetailsModal() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking cancelled successfully");
+      toast.success("Booking cancelled successfully", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
 
       resetEditingState();
       dispatch(closeBookingDetailsModal());
@@ -83,7 +89,13 @@ export function BookingDetailsModal() {
       const message =
         error.response?.data.message ?? "Failed to cancel booking";
 
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     },
   });
 
@@ -95,7 +107,13 @@ export function BookingDetailsModal() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking title updated successfully");
+      toast.success("Booking title updated successfully", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
 
       resetEditingState();
       dispatch(closeBookingDetailsModal());
@@ -105,7 +123,13 @@ export function BookingDetailsModal() {
       const message =
         error.response?.data.message ?? "Failed to update booking title";
 
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     },
   });
 

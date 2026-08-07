@@ -32,7 +32,11 @@ export function AppProvider({ children }: AppProviderProps) {
     <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>
         {children}
-        <Toaster />
+        <Toaster
+          containerStyle={{
+            top: 72,
+          }}
+        />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ReduxProvider>

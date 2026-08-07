@@ -79,7 +79,13 @@ export function BookingModal() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking created successfully");
+      toast.success("Booking created successfully", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
 
       dispatch(closeBookingModal());
     },
@@ -88,7 +94,13 @@ export function BookingModal() {
       const message =
         error.response?.data.message ?? "Failed to create booking";
 
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     },
   });
 

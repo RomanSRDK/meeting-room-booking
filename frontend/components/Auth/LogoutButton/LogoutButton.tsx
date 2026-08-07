@@ -29,7 +29,13 @@ export function LogoutButton() {
 
       router.replace("/login");
     } catch {
-      toast.error("Failed to log out");
+      toast.error("Failed to log out", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     }
   }
 

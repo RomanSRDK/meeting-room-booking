@@ -23,6 +23,7 @@ import {
   myUpcomingBookingsQueryOptions,
 } from "@/queries/booking-queries";
 import { deleteBooking } from "@/services/booking-service";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
 
 import styles from "./MyBookings.module.css";
 
@@ -67,6 +68,8 @@ export function MyBookings() {
     fetchNextPage,
   } = useInfiniteQuery(myPastBookingsInfiniteQueryOptions);
 
+  const now = useCurrentTime();
+
   const deleteBookingMutation = useMutation({
     mutationFn: deleteBooking,
 
@@ -75,14 +78,26 @@ export function MyBookings() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking cancelled successfully");
+      toast.success("Booking cancelled successfully", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     },
 
     onError: (error: AxiosError<ApiErrorResponse>) => {
       const message =
         error.response?.data.message ?? "Failed to cancel booking";
 
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     },
   });
 
@@ -93,8 +108,6 @@ export function MyBookings() {
   if (isUpcomingBookingsError || isPastBookingsError) {
     return <p className={styles.state}>Failed to load bookings</p>;
   }
-
-  const now = new Date();
 
   const upcomingBookings = upcomingBookingsData;
 

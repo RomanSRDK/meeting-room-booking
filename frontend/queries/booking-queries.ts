@@ -32,8 +32,8 @@ export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
 
 export const myUpcomingBookingsQueryOptions = queryOptions({
   queryKey: ["bookings", "my", "upcoming"],
-
   queryFn: getMyUpcomingBookings,
+  refetchInterval: 60_000,
 });
 
 export const myPastBookingsInfiniteQueryOptions = infiniteQueryOptions({
