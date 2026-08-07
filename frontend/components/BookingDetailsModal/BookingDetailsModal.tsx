@@ -95,10 +95,6 @@ export function BookingDetailsModal() {
         queryKey: ["bookings"],
       });
 
-      await queryClient.invalidateQueries({
-        queryKey: ["my-bookings"],
-      });
-
       toast.success("Booking title updated successfully");
 
       resetEditingState();

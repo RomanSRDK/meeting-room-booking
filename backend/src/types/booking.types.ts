@@ -11,12 +11,20 @@ export type GetMyBookingsQuery = {
   limit?: string;
 };
 
-export type GetMyBookingsInput = {
+export type GetMyUpcomingBookingsInput = {
   userId: string;
-  status: MyBookingsStatus;
+  status: "upcoming";
+};
+
+export type GetMyPastBookingsInput = {
+  userId: string;
+  status: "past";
   page: number;
   limit: number;
 };
+
+export type GetMyBookingsInput =
+  GetMyUpcomingBookingsInput | GetMyPastBookingsInput;
 
 export type CreateBookingBody = {
   title: string;

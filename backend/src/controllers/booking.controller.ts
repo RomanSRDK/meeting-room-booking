@@ -90,6 +90,21 @@ export async function getMyBookings(
       throw createHttpError(401, "Authentication required");
     }
 
+    if (req.query.status === "upcoming") {
+      const bookings = await getMyBookingsService({
+        userId: req.userId,
+        status: "upcoming",
+      });
+
+      res.status(200).json({
+        status: 200,
+        message: "User bookings retrieved successfully",
+        data: bookings,
+      });
+
+      return;
+    }
+
     const page = Number(req.query.page ?? "1");
     const limit = Number(req.query.limit ?? "6");
 
@@ -99,7 +114,7 @@ export async function getMyBookings(
 
     const bookings = await getMyBookingsService({
       userId: req.userId,
-      status: req.query.status,
+      status: "past",
       page,
       limit,
     });

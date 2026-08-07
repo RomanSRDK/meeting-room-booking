@@ -249,7 +249,6 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text);
-  text-decoration: none;
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-medium);
@@ -266,14 +265,12 @@
 
 .cancelButton {
   padding: 9px 14px;
-  font: inherit;
   font-size: 14px;
   font-weight: 500;
   color: #c62828;
   background-color: var(--color-background);
   border: 1px solid #c62828;
   border-radius: var(--border-radius-medium);
-  cursor: pointer;
 }
 
 .cancelButton:hover:not(:disabled) {

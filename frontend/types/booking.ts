@@ -55,7 +55,13 @@ export type PaginatedMyBookings = {
   pagination: MyBookingsPagination;
 };
 
-export type MyBookingsResponse = {
+export type MyUpcomingBookingsResponse = {
+  status: number;
+  message: string;
+  data: MyBooking[];
+};
+
+export type MyPastBookingsResponse = {
   status: number;
   message: string;
   data: PaginatedMyBookings;

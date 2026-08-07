@@ -147,39 +147,46 @@ export async function createBookingService({
   throw createHttpError(409, "Booking conflict occurred. Please try again");
 }
 
-export async function getMyBookingsService({
-  userId,
-  status,
-  page,
-  limit,
-}: GetMyBookingsInput) {
+export async function getMyBookingsService(input: GetMyBookingsInput) {
   const now = new Date();
 
-  const where =
-    status === "upcoming"
-      ? {
-          userId,
-          endsAt: {
-            gt: now,
+  if (input.status === "upcoming") {
+    return prisma.booking.findMany({
+      where: {
+        userId: input.userId,
+        endsAt: {
+          gt: now,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        endsAt: true,
+        createdAt: true,
+        room: {
+          select: {
+            id: true,
+            name: true,
+            floor: true,
+            capacity: true,
           },
-        }
-      : {
-          userId,
-          endsAt: {
-            lte: now,
-          },
-        };
+        },
+      },
+      orderBy: {
+        startsAt: "asc",
+      },
+    });
+  }
 
-  const orderBy =
-    status === "upcoming"
-      ? {
-          startsAt: "asc" as const,
-        }
-      : {
-          startsAt: "desc" as const,
-        };
+  const where = {
+    userId: input.userId,
+    endsAt: {
+      lte: now,
+    },
+  };
 
-  const skip = (page - 1) * limit;
+  const skip = (input.page - 1) * input.limit;
 
   const [items, totalItems] = await prisma.$transaction([
     prisma.booking.findMany({
@@ -199,9 +206,11 @@ export async function getMyBookingsService({
           },
         },
       },
-      orderBy,
+      orderBy: {
+        startsAt: "desc",
+      },
       skip,
-      take: limit,
+      take: input.limit,
     }),
 
     prisma.booking.count({
@@ -209,16 +218,16 @@ export async function getMyBookingsService({
     }),
   ]);
 
-  const totalPages = Math.ceil(totalItems / limit);
+  const totalPages = Math.ceil(totalItems / input.limit);
 
   return {
     items,
     pagination: {
-      page,
-      limit,
+      page: input.page,
+      limit: input.limit,
       totalItems,
       totalPages,
-      hasNextPage: page < totalPages,
+      hasNextPage: input.page < totalPages,
     },
   };
 }

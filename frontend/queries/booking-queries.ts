@@ -4,7 +4,11 @@ import {
   queryOptions,
 } from "@tanstack/react-query";
 
-import { getBookings, getMyBookings } from "@/services/booking-service";
+import {
+  getBookings,
+  getMyPastBookings,
+  getMyUpcomingBookings,
+} from "@/services/booking-service";
 
 type BookingsQueryParams = {
   start: string;
@@ -12,8 +16,6 @@ type BookingsQueryParams = {
 };
 
 export const PAST_BOOKINGS_PAGE_SIZE = 6;
-
-const UPCOMING_BOOKINGS_LIMIT = 50;
 
 export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
   return queryOptions({
@@ -31,20 +33,14 @@ export function bookingsQueryOptions({ start, end }: BookingsQueryParams) {
 export const myUpcomingBookingsQueryOptions = queryOptions({
   queryKey: ["bookings", "my", "upcoming"],
 
-  queryFn: () =>
-    getMyBookings({
-      status: "upcoming",
-      page: 1,
-      limit: UPCOMING_BOOKINGS_LIMIT,
-    }),
+  queryFn: getMyUpcomingBookings,
 });
 
 export const myPastBookingsInfiniteQueryOptions = infiniteQueryOptions({
   queryKey: ["bookings", "my", "past"],
 
   queryFn: ({ pageParam }) =>
-    getMyBookings({
-      status: "past",
+    getMyPastBookings({
       page: pageParam,
       limit: PAST_BOOKINGS_PAGE_SIZE,
     }),

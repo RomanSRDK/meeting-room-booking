@@ -10,8 +10,6 @@ import {
 import { AxiosError } from "axios";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
-import { BackButton } from "@/components/BackButton/BackButton";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
@@ -98,9 +96,9 @@ export function MyBookings() {
 
   const now = new Date();
 
-  const upcomingBookings = upcomingBookingsData.items;
+  const upcomingBookings = upcomingBookingsData;
 
-  const upcomingBookingsCount = upcomingBookingsData.pagination.totalItems;
+  const upcomingBookingsCount = upcomingBookings.length;
 
   const pastBookings = pastBookingsData.pages.flatMap((page) => page.items);
 
@@ -129,8 +127,6 @@ export function MyBookings() {
     <section className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <BackButton />
-
           <div>
             <h1 className={styles.title}>My bookings</h1>
 

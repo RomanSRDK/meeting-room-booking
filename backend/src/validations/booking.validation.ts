@@ -23,11 +23,19 @@ export const bookingParamsSchema = Joi.object({
 export const getMyBookingsQuerySchema = Joi.object({
   status: Joi.string().valid("upcoming", "past").required(),
 
-  page: Joi.string()
-    .pattern(/^[1-9]\d*$/)
-    .default("1"),
+  page: Joi.when("status", {
+    is: "past",
+    then: Joi.string()
+      .pattern(/^[1-9]\d*$/)
+      .default("1"),
+    otherwise: Joi.forbidden(),
+  }),
 
-  limit: Joi.string()
-    .pattern(/^[1-9]\d*$/)
-    .default("6"),
+  limit: Joi.when("status", {
+    is: "past",
+    then: Joi.string()
+      .pattern(/^[1-9]\d*$/)
+      .default("6"),
+    otherwise: Joi.forbidden(),
+  }),
 }).unknown(false);

@@ -4,21 +4,21 @@ import type {
   BookingResponse,
   BookingsResponse,
   CreateBookingPayload,
-  MyBookingsResponse,
-  MyBookingsStatus,
+  MyBooking,
+  MyPastBookingsResponse,
+  MyUpcomingBookingsResponse,
   PaginatedMyBookings,
   UpdateBookingTitlePayload,
 } from "@/types/booking";
 
-type GetMyBookingsParams = {
-  status: MyBookingsStatus;
-  page: number;
-  limit: number;
-};
-
 type GetBookingsParams = {
   start: string;
   end: string;
+};
+
+type GetMyPastBookingsParams = {
+  page: number;
+  limit: number;
 };
 
 export async function getBookings({
@@ -35,14 +35,26 @@ export async function getBookings({
   return response.data.data;
 }
 
-export async function getMyBookings({
-  status,
+export async function getMyUpcomingBookings(): Promise<MyBooking[]> {
+  const response = await apiClient.get<MyUpcomingBookingsResponse>(
+    "/bookings/my",
+    {
+      params: {
+        status: "upcoming",
+      },
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function getMyPastBookings({
   page,
   limit,
-}: GetMyBookingsParams): Promise<PaginatedMyBookings> {
-  const response = await apiClient.get<MyBookingsResponse>("/bookings/my", {
+}: GetMyPastBookingsParams): Promise<PaginatedMyBookings> {
+  const response = await apiClient.get<MyPastBookingsResponse>("/bookings/my", {
     params: {
-      status,
+      status: "past",
       page,
       limit,
     },
