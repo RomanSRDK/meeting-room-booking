@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent, ReactNode } from "react";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";
 
@@ -19,6 +19,15 @@ type ModalProps = {
   size?: ModalSize;
 };
 
+const FOCUSABLE_ELEMENTS_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
 export function Modal({
   children,
   title,
@@ -31,21 +40,105 @@ export function Modal({
   const titleId = useId();
   const descriptionId = useId();
 
+  const modalRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  const closeDisabledRef = useRef(closeDisabled);
+
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    closeDisabledRef.current = closeDisabled;
+  }, [closeDisabled]);
+
+  useEffect(() => {
+    const modalElement = modalRef.current;
+
+    if (!modalElement) {
+      return;
+    }
+
+    const modal: HTMLElement = modalElement;
+
+    const previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    function getFocusableElements() {
+      return Array.from(
+        modal.querySelectorAll<HTMLElement>(FOCUSABLE_ELEMENTS_SELECTOR),
+      );
+    }
+
+    const firstFocusableElement = getFocusableElements()[0];
+
+    if (firstFocusableElement) {
+      firstFocusableElement.focus();
+    } else {
+      modal.focus();
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape" || closeDisabled) {
+      if (event.key === "Escape") {
+        if (!closeDisabledRef.current) {
+          onCloseRef.current();
+        }
+
         return;
       }
 
-      onClose();
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusableElements = getFocusableElements();
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) {
+        event.preventDefault();
+        modal.focus();
+
+        return;
+      }
+
+      if (event.shiftKey) {
+        if (
+          document.activeElement === firstElement ||
+          document.activeElement === modal
+        ) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+
+        return;
+      }
+
+      if (
+        document.activeElement === lastElement ||
+        !modal.contains(document.activeElement)
+      ) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+
+      if (
+        previouslyFocusedElement &&
+        document.contains(previouslyFocusedElement)
+      ) {
+        previouslyFocusedElement.focus();
+      }
     };
-  }, [closeDisabled, onClose]);
+  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -75,11 +168,13 @@ export function Modal({
       onMouseDown={handleBackdropMouseDown}
     >
       <section
+        ref={modalRef}
         className={modalClassName}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
       >
         <header className={styles.header}>
           <div>

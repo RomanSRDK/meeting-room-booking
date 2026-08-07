@@ -1,14 +1,14 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Modal } from "@/components/Modal/Modal";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { addMinutes } from "date-fns";
 import { Form, Formik } from "formik";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
 
+import { Modal } from "@/components/Modal/Modal";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
@@ -18,6 +18,7 @@ import {
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
+import { roomsQueryOptions } from "@/queries/room-queries";
 import { createBooking } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingModal } from "@/store/slices/schedule-slice";
@@ -58,6 +59,8 @@ function formatDuration(duration: number) {
 export function BookingModal() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
+  const { data: rooms } = useQuery(roomsQueryOptions);
 
   const userTimeZone = useSyncExternalStore(
     subscribeToTimeZone,
@@ -116,6 +119,8 @@ export function BookingModal() {
     return null;
   }
 
+  const selectedRoom = rooms?.find((room) => room.id === bookingDraft.roomId);
+
   const startsAt = new Date(bookingDraft.startsAt);
   const workingDayEnd = getOfficeWorkdayEnd(startsAt);
 
@@ -154,7 +159,7 @@ export function BookingModal() {
     return (
       <Modal
         title="Slot unavailable"
-        description="This time slot is no longer available."
+        description={selectedRoom ? `Room: ${selectedRoom.name}` : undefined}
         closeButtonLabel="Close booking modal"
         onClose={handleClose}
       >
@@ -199,7 +204,7 @@ export function BookingModal() {
   return (
     <Modal
       title="Create booking"
-      description="Enter the booking details."
+      description={selectedRoom ? `Room: ${selectedRoom.name}` : undefined}
       closeButtonLabel="Close booking modal"
       closeDisabled={createBookingMutation.isPending}
       onClose={handleClose}
