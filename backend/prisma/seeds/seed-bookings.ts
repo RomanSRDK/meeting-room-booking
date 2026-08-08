@@ -41,16 +41,21 @@ export async function seedBookings({
     });
   }
 
-  const demoBookingTitles = [
-    "Daily Standup",
-    "Frontend Planning",
-    "Product Discussion",
-  ];
+  const firstRoom = rooms[0];
+  const secondRoom = rooms[1];
+  const thirdRoom = rooms[2];
+
+  if (!firstRoom || !secondRoom || !thirdRoom) {
+    throw new Error("At least 3 rooms are required to seed demo bookings");
+  }
 
   await prisma.booking.deleteMany({
     where: {
       title: {
-        in: demoBookingTitles,
+        in: ["Daily Standup", "Frontend Planning", "Product Discussion"],
+      },
+      userId: {
+        in: [firstUser.id, secondUser.id],
       },
     },
   });
@@ -62,21 +67,21 @@ export async function seedBookings({
         startsAt: createBookingDate(0, 10),
         endsAt: createBookingDate(0, 10, 30),
         userId: firstUser.id,
-        roomId: rooms[0].id,
+        roomId: firstRoom.id,
       },
       {
         title: "Frontend Planning",
         startsAt: createBookingDate(2, 14, 30),
         endsAt: createBookingDate(2, 15, 30),
         userId: secondUser.id,
-        roomId: rooms[1].id,
+        roomId: secondRoom.id,
       },
       {
         title: "Product Discussion",
         startsAt: createBookingDate(4, 12),
         endsAt: createBookingDate(4, 13),
         userId: firstUser.id,
-        roomId: rooms[2].id,
+        roomId: thirdRoom.id,
       },
     ],
   });
