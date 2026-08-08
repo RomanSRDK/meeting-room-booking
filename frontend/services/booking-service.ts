@@ -66,9 +66,9 @@ export async function getMyPastBookings({
 export async function createBooking(
   payload: CreateBookingPayload,
 ): Promise<Booking> {
-  const response = await apiClient.post<BookingResponse>("/bookings", payload);
+  const response = await apiClient.post<Booking>("/bookings", payload);
 
-  return response.data.data;
+  return response.data;
 }
 
 export async function deleteBooking(bookingId: string): Promise<void> {

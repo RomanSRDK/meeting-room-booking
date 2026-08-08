@@ -44,6 +44,23 @@ export function LoginForm() {
 
       router.replace("/");
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        formikHelpers.resetForm();
+
+        const message =
+          "Too many login attempts. Please wait 15 minutes and try again";
+
+        toast.error(message, {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+
+        return;
+      }
+
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         formikHelpers.setStatus("Invalid email or password");
 

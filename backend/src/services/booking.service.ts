@@ -103,22 +103,14 @@ export async function createBookingService({
               title: true,
               startsAt: true,
               endsAt: true,
-              room: {
-                select: {
-                  id: true,
-                  name: true,
-                  floor: true,
-                  capacity: true,
-                },
-              },
+              roomId: true,
+
               user: {
                 select: {
                   id: true,
                   name: true,
-                  email: true,
                 },
               },
-              createdAt: true,
             },
           });
         },

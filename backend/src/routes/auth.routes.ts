@@ -8,12 +8,18 @@ import {
 } from "../controllers/auth.controller.ts";
 import { loginSchema, registerSchema } from "../validations/auth.validation.ts";
 import { authenticate } from "../middlewares/auth.middleware.ts";
+import { loginRateLimiter } from "../middlewares/login-rate-limit.middleware.ts";
 
 export const authRouter = Router();
 
 authRouter.post("/register", validateBody(registerSchema), registerUser);
 
-authRouter.post("/login", validateBody(loginSchema), loginUser);
+authRouter.post(
+  "/login",
+  validateBody(loginSchema),
+  loginRateLimiter,
+  loginUser,
+);
 
 authRouter.get("/me", authenticate, getCurrentUser);
 
