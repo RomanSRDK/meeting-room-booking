@@ -39,7 +39,19 @@ export function RegisterForm() {
 
     try {
       await registerMutation.mutateAsync(values);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        formikHelpers.setStatus("A user with this email already exists");
 
+        return;
+      }
+
+      formikHelpers.setStatus("Failed to create an account");
+
+      return;
+    }
+
+    try {
       const user = await loginMutation.mutateAsync({
         email: values.email,
         password: values.password,
@@ -56,14 +68,10 @@ export function RegisterForm() {
       });
 
       router.replace("/");
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 409) {
-        formikHelpers.setStatus("A user with this email already exists");
-
-        return;
-      }
-
-      formikHelpers.setStatus("Failed to create an account");
+    } catch {
+      formikHelpers.setStatus(
+        "Account created successfully, but automatic login failed. Please log in manually.",
+      );
     }
   }
 
