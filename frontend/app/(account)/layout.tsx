@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AccountShell } from "@/components/Layout/AccountShell/AccountShell";
+import { AccountShell } from "@/components/AccountShell/AccountShell";
 
 type AccountLayoutProps = {
   children: ReactNode;
