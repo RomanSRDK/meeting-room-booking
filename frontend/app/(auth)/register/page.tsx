@@ -20,7 +20,7 @@ export default function RegisterPage() {
 
         <p className={styles.footer}>
           Already have an account?{" "}
-          <Link className={styles.link} href="/login">
+          <Link className={styles.link} href="/login" prefetch={false}>
             Log in
           </Link>
         </p>
