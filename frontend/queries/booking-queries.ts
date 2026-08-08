@@ -51,4 +51,6 @@ export const myPastBookingsInfiniteQueryOptions = infiniteQueryOptions({
 
     return lastPage.pagination.page + 1;
   },
+
+  refetchInterval: 60_000,
 });
