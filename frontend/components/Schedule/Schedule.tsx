@@ -1,19 +1,16 @@
 "use client";
 
-import { useSyncExternalStore, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  addDays,
   addMinutes,
   differenceInCalendarDays,
   differenceInMinutes,
 } from "date-fns";
 import {
-  formatInOfficeTimeZone,
-  formatInUserTimeZone,
   getNextOfficeWeek,
-  getOfficeSlotStart,
   getOfficeWeekDays,
   getOfficeWeekEnd,
   getOfficeWeekStart,
@@ -21,14 +18,17 @@ import {
   getOfficeWorkdayStart,
   getPreviousOfficeWeek,
   getSlotsCount,
-  getTimeZoneOffsetLabel,
-  getUserTimeZone,
   isOfficeTimeZone,
-  OFFICE_TIME_ZONE,
   SLOT_DURATION_MINUTES,
   toOfficeDate,
   WEEK_DAYS_COUNT,
 } from "@/lib/date-time";
+import { ScheduleToolbar } from "./ScheduleToolbar";
+import { ScheduleDaysHeader } from "./ScheduleDaysHeader";
+import { ScheduleTimeScale } from "./ScheduleTimeScale";
+import { ScheduleBooking } from "./ScheduleBooking";
+import { ScheduleTimeZoneNotice } from "./ScheduleTimeZoneNotice";
+import { ScheduleSlots } from "./ScheduleSlots";
 import { currentUserQueryOptions } from "@/queries/auth-queries";
 import { bookingsQueryOptions } from "@/queries/booking-queries";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -40,10 +40,6 @@ import { useCurrentTime } from "@/hooks/useCurrentTime";
 import styles from "./Schedule.module.css";
 
 const SLOT_HEIGHT_PX = 32;
-
-function subscribeToTimeZone() {
-  return () => {};
-}
 
 function getInitialWeekStart(dateParameter: string | null) {
   if (!dateParameter) {
@@ -70,11 +66,7 @@ export function Schedule() {
     (state) => state.schedule.selectedRoomId,
   );
 
-  const userTimeZone = useSyncExternalStore(
-    subscribeToTimeZone,
-    getUserTimeZone,
-    () => OFFICE_TIME_ZONE,
-  );
+  const userTimeZone = useUserTimeZone();
 
   const weekStart = getInitialWeekStart(searchParams.get("date"));
 
@@ -247,69 +239,16 @@ export function Schedule() {
 
   const userUsesOfficeTimeZone = isOfficeTimeZone(userTimeZone);
 
-  const userTimeZoneOffset = getTimeZoneOffsetLabel(userTimeZone, now);
-
-  const officeTimeZoneOffset = getTimeZoneOffsetLabel(OFFICE_TIME_ZONE, now);
-
   return (
     <section className={styles.schedule}>
-      <header className={styles.toolbar}>
-        <div className={styles.navigation}>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={handlePreviousWeek}
-          >
-            Previous
-          </button>
+      <ScheduleToolbar
+        weekStart={weekStart}
+        onPreviousWeek={handlePreviousWeek}
+        onCurrentWeek={handleCurrentWeek}
+        onNextWeek={handleNextWeek}
+      />
 
-          <button
-            className={styles.button}
-            type="button"
-            onClick={handleCurrentWeek}
-          >
-            This Week
-          </button>
-
-          <button
-            className={styles.button}
-            type="button"
-            onClick={handleNextWeek}
-          >
-            Next
-          </button>
-        </div>
-
-        <h2 className={styles.title}>
-          {formatInOfficeTimeZone(weekStart, "dd.MM.yyyy")} –{" "}
-          {formatInOfficeTimeZone(
-            addDays(weekStart, WEEK_DAYS_COUNT - 1),
-            "dd.MM.yyyy",
-          )}
-        </h2>
-      </header>
-
-      <div className={styles.timeZoneNotice}>
-        {userUsesOfficeTimeZone ? (
-          <p className={styles.timeZoneText}>
-            Times are shown in <strong>{OFFICE_TIME_ZONE}</strong> (
-            {officeTimeZoneOffset}).
-          </p>
-        ) : (
-          <>
-            <p className={styles.timeZoneText}>
-              Schedule times are shown in your time zone:{" "}
-              <strong>{userTimeZone}</strong> ({userTimeZoneOffset}).
-            </p>
-
-            <p className={styles.timeZoneSecondary}>
-              Each column represents an office working day: 09:00–19:00 in{" "}
-              {OFFICE_TIME_ZONE} ({officeTimeZoneOffset}). A working day may
-              cross midnight in your local time.
-            </p>
-          </>
-        )}
-      </div>
+      <ScheduleTimeZoneNotice userTimeZone={userTimeZone} now={now} />
 
       <div
         className={`${styles.scheduleWrapper} ${
@@ -317,96 +256,20 @@ export function Schedule() {
         }`}
       >
         <div className={styles.scheduleContent}>
-          <div className={styles.daysHeader}>
-            <div className={styles.headerCorner} />
-
-            {weekDays.map((officeDay) => {
-              const officeWorkdayStart = getOfficeWorkdayStart(officeDay);
-
-              const officeWorkdayEnd = getOfficeWorkdayEnd(officeDay);
-
-              const isToday =
-                differenceInCalendarDays(officeDay, officeNow) === 0;
-
-              const officeDateKey = formatInOfficeTimeZone(
-                officeDay,
-                "yyyy-MM-dd",
-              );
-
-              const localStartDateKey = formatInUserTimeZone(
-                officeWorkdayStart,
-                "yyyy-MM-dd",
-                userTimeZone,
-              );
-
-              const localEndDateKey = formatInUserTimeZone(
-                officeWorkdayEnd,
-                "yyyy-MM-dd",
-                userTimeZone,
-              );
-
-              const shouldShowLocalRange =
-                !userUsesOfficeTimeZone &&
-                (localStartDateKey !== officeDateKey ||
-                  localEndDateKey !== officeDateKey);
-
-              return (
-                <div
-                  className={`${styles.dayHeader} ${
-                    isToday ? styles.todayHeader : ""
-                  }`}
-                  key={officeDay.toISOString()}
-                >
-                  <div className={styles.officeDay}>
-                    <span className={styles.dayName}>
-                      {formatInOfficeTimeZone(officeDay, "EEE")}
-                    </span>
-
-                    <span className={styles.dayDate}>
-                      {formatInOfficeTimeZone(officeDay, "dd.MM")}
-                    </span>
-                  </div>
-
-                  {shouldShowLocalRange && (
-                    <span className={styles.localTimeRange}>
-                      {formatInUserTimeZone(
-                        officeWorkdayStart,
-                        "EEE dd.MM, HH:mm",
-                        userTimeZone,
-                      )}
-                      {" – "}
-                      {formatInUserTimeZone(
-                        officeWorkdayEnd,
-                        "EEE dd.MM, HH:mm",
-                        userTimeZone,
-                      )}
-                      {" local"}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <ScheduleDaysHeader
+            weekDays={weekDays}
+            officeNow={officeNow}
+            userTimeZone={userTimeZone}
+            userUsesOfficeTimeZone={userUsesOfficeTimeZone}
+          />
 
           <div className={styles.scheduleBody}>
-            <div
-              className={styles.timeScale}
-              style={{
-                height: scheduleHeight,
-              }}
-            >
-              {timeLabels.map((timeLabel, labelIndex) => (
-                <span
-                  className={styles.timeLabel}
-                  key={timeLabel.toISOString()}
-                  style={{
-                    top: labelIndex * SLOT_HEIGHT_PX,
-                  }}
-                >
-                  {formatInUserTimeZone(timeLabel, "HH:mm", userTimeZone)}
-                </span>
-              ))}
-            </div>
+            <ScheduleTimeScale
+              timeLabels={timeLabels}
+              scheduleHeight={scheduleHeight}
+              slotHeight={SLOT_HEIGHT_PX}
+              userTimeZone={userTimeZone}
+            />
 
             <div
               className={styles.daysGrid}
@@ -415,51 +278,14 @@ export function Schedule() {
                 height: scheduleHeight,
               }}
             >
-              {Array.from(
-                {
-                  length: WEEK_DAYS_COUNT * slotsCount,
-                },
-                (_, cellIndex) => {
-                  const dayIndex = cellIndex % WEEK_DAYS_COUNT;
-
-                  const slotIndex = Math.floor(cellIndex / WEEK_DAYS_COUNT);
-
-                  const officeDay = weekDays[dayIndex];
-
-                  const slotStart = getOfficeSlotStart(officeDay, slotIndex);
-
-                  const slotEnd = addMinutes(slotStart, SLOT_DURATION_MINUTES);
-
-                  const isOccupied = roomBookings.some((booking) => {
-                    const bookingStart = new Date(booking.startsAt);
-
-                    const bookingEnd = new Date(booking.endsAt);
-
-                    return bookingStart < slotEnd && bookingEnd > slotStart;
-                  });
-
-                  const isPast = slotStart < now;
-
-                  const isDisabled = isOccupied || isPast;
-
-                  return (
-                    <button
-                      className={`${styles.slot} ${
-                        isOccupied ? styles.occupiedSlot : ""
-                      } ${isPast ? styles.pastSlot : ""}`}
-                      disabled={isDisabled}
-                      key={`${dayIndex}-${slotIndex}`}
-                      type="button"
-                      aria-label={`Book ${formatInUserTimeZone(
-                        slotStart,
-                        "dd.MM.yyyy HH:mm",
-                        userTimeZone,
-                      )}`}
-                      onClick={() => handleSlotClick(slotStart)}
-                    />
-                  );
-                },
-              )}
+              <ScheduleSlots
+                weekDays={weekDays}
+                slotsCount={slotsCount}
+                bookings={roomBookings}
+                now={now}
+                userTimeZone={userTimeZone}
+                onSlotClick={handleSlotClick}
+              />
 
               {currentDayIndex >= 0 && currentDayIndex < WEEK_DAYS_COUNT && (
                 <div
@@ -484,128 +310,20 @@ export function Schedule() {
                 </div>
               )}
 
-              {visibleRoomBookings.map((booking) => {
-                const bookingStart = new Date(booking.startsAt);
-
-                const bookingEnd = new Date(booking.endsAt);
-
-                const bookingOfficeDate = toOfficeDate(bookingStart);
-
-                const bookingDayIndex = differenceInCalendarDays(
-                  bookingOfficeDate,
-                  weekStart,
-                );
-
-                const bookingOfficeWorkdayStart =
-                  getOfficeWorkdayStart(bookingOfficeDate);
-
-                const minutesFromWorkingDayStart = differenceInMinutes(
-                  bookingStart,
-                  bookingOfficeWorkdayStart,
-                );
-
-                const durationMinutes = differenceInMinutes(
-                  bookingEnd,
-                  bookingStart,
-                );
-
-                const isCompactBooking =
-                  durationMinutes === SLOT_DURATION_MINUTES;
-
-                const top =
-                  (minutesFromWorkingDayStart / SLOT_DURATION_MINUTES) *
-                  SLOT_HEIGHT_PX;
-
-                const height =
-                  (durationMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX;
-
-                const left = (bookingDayIndex / WEEK_DAYS_COUNT) * 100;
-
-                const width = 100 / WEEK_DAYS_COUNT;
-
-                const isOwnBooking = booking.user.id === currentUser?.id;
-
-                const canCancelBooking = isOwnBooking && bookingEnd > now;
-
-                const bookingClassName = `${styles.booking} ${
-                  isOwnBooking ? styles.ownBooking : styles.otherBooking
-                } ${canCancelBooking ? styles.clickableBooking : ""} ${
-                  isCompactBooking ? styles.compactBooking : ""
-                }`;
-
-                const formattedBookingTime = `${formatInUserTimeZone(
-                  bookingStart,
-                  "HH:mm",
-                  userTimeZone,
-                )}–${formatInUserTimeZone(bookingEnd, "HH:mm", userTimeZone)}`;
-
-                const bookingAuthor = isOwnBooking ? "You" : booking.user.name;
-
-                const bookingContent = (
-                  <>
-                    <strong
-                      className={styles.bookingTitle}
-                      title={booking.title}
-                    >
-                      {booking.title}
-                    </strong>
-
-                    {isCompactBooking ? (
-                      <span className={styles.compactBookingDetails}>
-                        <span>{formattedBookingTime}</span>
-
-                        <span aria-hidden="true">·</span>
-
-                        <span className={styles.compactBookingAuthor}>
-                          {bookingAuthor}
-                        </span>
-                      </span>
-                    ) : (
-                      <>
-                        <span className={styles.bookingTime}>
-                          {formattedBookingTime}
-                        </span>
-
-                        <span className={styles.bookingAuthor}>
-                          {bookingAuthor}
-                        </span>
-                      </>
-                    )}
-                  </>
-                );
-
-                const bookingStyle = {
-                  top,
-                  height,
-                  left: `${left}%`,
-                  width: `${width}%`,
-                };
-
-                if (canCancelBooking) {
-                  return (
-                    <button
-                      className={bookingClassName}
-                      key={booking.id}
-                      style={bookingStyle}
-                      type="button"
-                      aria-label={`Open booking ${booking.title}`}
-                      onClick={() => dispatch(openBookingDetailsModal(booking))}
-                    >
-                      {bookingContent}
-                    </button>
-                  );
-                }
-
-                return (
-                  <article
-                    className={bookingClassName}
-                    key={booking.id}
-                    style={bookingStyle}
-                  >
-                    {bookingContent}
-                  </article>
-                );
-              })}
+              {visibleRoomBookings.map((booking) => (
+                <ScheduleBooking
+                  key={booking.id}
+                  booking={booking}
+                  weekStart={weekStart}
+                  now={now}
+                  currentUserId={currentUser?.id}
+                  userTimeZone={userTimeZone}
+                  slotHeight={SLOT_HEIGHT_PX}
+                  onOpen={(selectedBooking) => {
+                    dispatch(openBookingDetailsModal(selectedBooking));
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
