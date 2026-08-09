@@ -78,26 +78,14 @@ export function MyBookings() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking cancelled successfully", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.success("Booking cancelled successfully");
     },
 
     onError: (error: AxiosError<ApiErrorResponse>) => {
       const message =
         error.response?.data.message ?? "Failed to cancel booking";
 
-      toast.error(message, {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.error(message);
     },
   });
 

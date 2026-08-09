@@ -34,13 +34,7 @@ export function LoginForm() {
 
       queryClient.setQueryData(currentUserQueryOptions.queryKey, user);
 
-      toast.success("Logged in successfully", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.success("Logged in successfully");
 
       router.replace("/");
     } catch (error) {
@@ -50,13 +44,7 @@ export function LoginForm() {
         const message =
           "Too many login attempts. Please wait 15 minutes and try again";
 
-        toast.error(message, {
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
-        });
+        toast.error(message);
 
         return;
       }

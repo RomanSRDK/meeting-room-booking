@@ -59,13 +59,7 @@ export function RegisterForm() {
 
       queryClient.setQueryData(currentUserQueryOptions.queryKey, user);
 
-      toast.success("Account created successfully", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.success("Account created successfully");
 
       router.replace("/");
     } catch {

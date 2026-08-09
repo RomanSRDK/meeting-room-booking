@@ -82,13 +82,7 @@ export function BookingModal() {
         queryKey: ["bookings"],
       });
 
-      toast.success("Booking created successfully", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.success("Booking created successfully");
 
       dispatch(closeBookingModal());
     },
@@ -105,11 +99,6 @@ export function BookingModal() {
             : "Something went wrong. Please try again";
         toast(message, {
           icon: "😞",
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
         });
 
         dispatch(closeBookingModal());

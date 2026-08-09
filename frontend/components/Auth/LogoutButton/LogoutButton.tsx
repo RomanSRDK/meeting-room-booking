@@ -19,23 +19,11 @@ export function LogoutButton() {
 
       queryClient.setQueryData(currentUserQueryOptions.queryKey, null);
 
-      toast.success("Logged out successfully", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.success("Logged out successfully");
 
       router.replace("/login");
     } catch {
-      toast.error("Failed to log out", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.error("Failed to log out");
     }
   }
 
