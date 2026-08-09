@@ -3,11 +3,9 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
 import { roomsQueryOptions } from "@/queries/room-queries";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectRoom } from "@/store/slices/schedule-slice";
-
 import styles from "./RoomList.module.css";
 
 export function RoomList() {

@@ -1,12 +1,10 @@
 import { differenceInCalendarDays } from "date-fns";
-
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
   getOfficeWorkdayEnd,
   getOfficeWorkdayStart,
 } from "@/lib/date-time";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleDaysHeaderProps = {

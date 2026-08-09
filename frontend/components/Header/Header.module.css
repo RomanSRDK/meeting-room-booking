@@ -46,14 +46,12 @@
 
 .navigationLink:hover {
   color: var(--color-text);
-
   background-color: var(--color-surface);
   border-color: var(--color-border);
 }
 
 .activeNavigationLink {
   color: var(--color-text);
-
   background-color: var(--color-surface);
   border-color: var(--color-border);
 }
@@ -73,9 +71,7 @@
 
 .userName {
   max-width: 180px;
-
   overflow: hidden;
-
   font-size: 14px;
   font-weight: 500;
   text-overflow: ellipsis;
@@ -91,9 +87,7 @@
   .navigation {
     grid-column: 1 / -1;
     grid-row: 2;
-
     justify-content: flex-start;
-
     overflow-x: auto;
   }
 }

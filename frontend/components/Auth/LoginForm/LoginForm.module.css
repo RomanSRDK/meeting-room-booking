@@ -24,12 +24,10 @@
   min-height: 44px;
   padding: 10px 12px;
   color: var(--color-text);
-
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-small);
   outline: none;
-
   transition:
     border-color var(--transition-duration) ease,
     box-shadow var(--transition-duration) ease,
@@ -55,7 +53,6 @@
 
 .error {
   margin: 0;
-
   font-size: 14px;
   line-height: 1.4;
   color: var(--color-error);
@@ -64,11 +61,9 @@
 .requestError {
   margin: 0;
   padding: 10px 12px;
-
   font-size: 14px;
   line-height: 1.4;
   color: var(--color-error);
-
   background-color: var(--color-error-background);
   border: 1px solid var(--color-error-border);
   border-radius: var(--border-radius-small);
@@ -77,14 +72,11 @@
 .submitButton {
   min-height: 44px;
   padding: 10px 16px;
-
   font-weight: 600;
   color: var(--color-primary-text);
-
   background-color: var(--color-primary);
   border: 1px solid var(--color-primary);
   border-radius: var(--border-radius-small);
-
   transition:
     background-color var(--transition-duration) ease,
     border-color var(--transition-duration) ease,

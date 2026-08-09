@@ -1,5 +1,4 @@
 import { formatInUserTimeZone } from "@/lib/date-time";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleTimeScaleProps = {

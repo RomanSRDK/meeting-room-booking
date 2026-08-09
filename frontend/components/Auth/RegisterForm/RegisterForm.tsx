@@ -1,12 +1,10 @@
 "use client";
 
 import axios from "axios";
-import type { FormikHelpers } from "formik";
-import { ErrorMessage, Field, Form, Formik } from "formik";
+import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-
 import {
   loginMutationOptions,
   registerMutationOptions,
@@ -14,7 +12,6 @@ import {
 import { currentUserQueryOptions } from "@/queries/auth-queries";
 import type { RegisterCredentials } from "@/types/auth";
 import { registerValidationSchema } from "@/validations/register-validation";
-
 import styles from "./RegisterForm.module.css";
 
 const initialValues: RegisterCredentials = {

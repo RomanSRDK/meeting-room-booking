@@ -1,5 +1,4 @@
 import { getTimeZoneOffsetLabel, OFFICE_TIME_ZONE } from "@/lib/date-time";
-
 import styles from "./MyBookings.module.css";
 
 type MyBookingsHeaderProps = {

@@ -1,10 +1,14 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
-import { useEffect, useId, useRef } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";
-
 import styles from "./Modal.module.css";
 
 type ModalSize = "default" | "wide";

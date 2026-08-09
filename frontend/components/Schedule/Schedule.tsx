@@ -1,14 +1,15 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useUserTimeZone } from "@/hooks/useUserTimeZone";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   addMinutes,
   differenceInCalendarDays,
   differenceInMinutes,
 } from "date-fns";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
 import {
   getNextOfficeWeek,
   getOfficeWeekDays,
@@ -23,12 +24,6 @@ import {
   toOfficeDate,
   WEEK_DAYS_COUNT,
 } from "@/lib/date-time";
-import { ScheduleToolbar } from "./ScheduleToolbar";
-import { ScheduleDaysHeader } from "./ScheduleDaysHeader";
-import { ScheduleTimeScale } from "./ScheduleTimeScale";
-import { ScheduleBooking } from "./ScheduleBooking";
-import { ScheduleTimeZoneNotice } from "./ScheduleTimeZoneNotice";
-import { ScheduleSlots } from "./ScheduleSlots";
 import { currentUserQueryOptions } from "@/queries/auth-queries";
 import { bookingsQueryOptions } from "@/queries/booking-queries";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -36,7 +31,12 @@ import {
   openBookingDetailsModal,
   openBookingModal,
 } from "@/store/slices/schedule-slice";
-import { useCurrentTime } from "@/hooks/useCurrentTime";
+import { ScheduleBooking } from "./ScheduleBooking";
+import { ScheduleDaysHeader } from "./ScheduleDaysHeader";
+import { ScheduleSlots } from "./ScheduleSlots";
+import { ScheduleTimeScale } from "./ScheduleTimeScale";
+import { ScheduleTimeZoneNotice } from "./ScheduleTimeZoneNotice";
+import { ScheduleToolbar } from "./ScheduleToolbar";
 import styles from "./Schedule.module.css";
 
 const SLOT_HEIGHT_PX = 32;

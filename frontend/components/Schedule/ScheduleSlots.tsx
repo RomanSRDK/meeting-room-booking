@@ -1,5 +1,4 @@
 import { addMinutes } from "date-fns";
-
 import type { Booking } from "@/types/booking";
 import {
   formatInUserTimeZone,
@@ -7,7 +6,6 @@ import {
   SLOT_DURATION_MINUTES,
   WEEK_DAYS_COUNT,
 } from "@/lib/date-time";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleSlotsProps = {

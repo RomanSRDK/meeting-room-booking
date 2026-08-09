@@ -3,7 +3,6 @@ import {
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleTimeZoneNoticeProps = {

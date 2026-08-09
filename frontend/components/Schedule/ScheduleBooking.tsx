@@ -1,7 +1,6 @@
 "use client";
 
 import { differenceInCalendarDays, differenceInMinutes } from "date-fns";
-
 import {
   formatInUserTimeZone,
   getOfficeWorkdayStart,
@@ -9,9 +8,7 @@ import {
   toOfficeDate,
   WEEK_DAYS_COUNT,
 } from "@/lib/date-time";
-
 import type { Booking } from "@/types/booking";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleBookingProps = {

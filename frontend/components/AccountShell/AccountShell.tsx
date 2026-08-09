@@ -3,11 +3,9 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-
 import { Header } from "@/components/Header/Header";
 import { Footer } from "@/components/Footer/Footer";
 import { currentUserQueryOptions } from "@/queries/auth-queries";
-
 import styles from "./AccountShell.module.css";
 
 type AccountShellProps = {

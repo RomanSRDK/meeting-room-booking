@@ -1,7 +1,5 @@
 "use client";
 
-import { useUserTimeZone } from "@/hooks/useUserTimeZone";
-import { MyBookingsHeader } from "./MyBookingsHeader";
 import {
   useInfiniteQuery,
   useMutation,
@@ -10,15 +8,17 @@ import {
 } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import toast from "react-hot-toast";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
 import { isOfficeTimeZone } from "@/lib/date-time";
 import {
   myPastBookingsInfiniteQueryOptions,
   myUpcomingBookingsQueryOptions,
 } from "@/queries/booking-queries";
 import { deleteBooking } from "@/services/booking-service";
-import { useCurrentTime } from "@/hooks/useCurrentTime";
-import { UpcomingBookingsSection } from "./UpcomingBookingsSection";
+import { MyBookingsHeader } from "./MyBookingsHeader";
 import { PastBookingsSection } from "./PastBookingsSection";
+import { UpcomingBookingsSection } from "./UpcomingBookingsSection";
 import styles from "./MyBookings.module.css";
 
 type ApiErrorResponse = {

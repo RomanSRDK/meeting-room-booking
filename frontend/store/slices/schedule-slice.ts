@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-
 import type { Booking } from "@/types/booking";
 
 type BookingDraft = {

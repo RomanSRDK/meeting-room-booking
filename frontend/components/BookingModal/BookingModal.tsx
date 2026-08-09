@@ -1,20 +1,18 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import { addMinutes } from "date-fns";
+import { AxiosError } from "axios";
 import { Form, Formik } from "formik";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
-
 import { Modal } from "@/components/Modal/Modal";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
   getOfficeWorkdayEnd,
   getTimeZoneOffsetLabel,
-  getUserTimeZone,
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
@@ -23,7 +21,7 @@ import { createBooking } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingModal } from "@/store/slices/schedule-slice";
 import type { Booking } from "@/types/booking";
-
+import { getAvailableBookingDurations } from "@/utils/booking-modal-utils";
 import styles from "./BookingModal.module.css";
 
 const BOOKING_DURATIONS = [30, 60, 90, 120, 150, 180, 210, 240];
@@ -36,10 +34,6 @@ type BookingFormValues = {
 type ApiErrorResponse = {
   message?: string;
 };
-
-function subscribeToTimeZone() {
-  return () => {};
-}
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 60);
@@ -62,11 +56,7 @@ export function BookingModal() {
 
   const { data: rooms } = useQuery(roomsQueryOptions);
 
-  const userTimeZone = useSyncExternalStore(
-    subscribeToTimeZone,
-    getUserTimeZone,
-    () => OFFICE_TIME_ZONE,
-  );
+  const userTimeZone = useUserTimeZone();
 
   const isBookingModalOpen = useAppSelector(
     (state) => state.schedule.isBookingModalOpen,
@@ -131,25 +121,12 @@ export function BookingModal() {
     ([, bookings]) => bookings ?? [],
   );
 
-  const availableDurations = BOOKING_DURATIONS.filter((duration) => {
-    const candidateEnd = addMinutes(startsAt, duration);
-
-    if (candidateEnd > workingDayEnd) {
-      return false;
-    }
-
-    const hasConflict = cachedBookings.some((booking) => {
-      if (booking.roomId !== bookingDraft.roomId) {
-        return false;
-      }
-
-      const existingStart = new Date(booking.startsAt);
-      const existingEnd = new Date(booking.endsAt);
-
-      return existingStart < candidateEnd && existingEnd > startsAt;
-    });
-
-    return !hasConflict;
+  const availableDurations = getAvailableBookingDurations({
+    durations: BOOKING_DURATIONS,
+    startsAt,
+    workingDayEnd,
+    roomId: bookingDraft.roomId,
+    bookings: cachedBookings,
   });
 
   const initialDuration = availableDurations[0];

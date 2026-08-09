@@ -1,38 +1,26 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import toast from "react-hot-toast";
-
 import { Modal } from "@/components/Modal/Modal";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
 import {
   formatInOfficeTimeZone,
   formatInUserTimeZone,
   getTimeZoneOffsetLabel,
-  getUserTimeZone,
   isOfficeTimeZone,
   OFFICE_TIME_ZONE,
 } from "@/lib/date-time";
 import { deleteBooking, updateBookingTitle } from "@/services/booking-service";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeBookingDetailsModal } from "@/store/slices/schedule-slice";
-
 import styles from "./BookingDetailsModal.module.css";
 
 type ApiErrorResponse = {
   message?: string;
 };
-
-function subscribeToTimeZone() {
-  return () => {};
-}
 
 export function BookingDetailsModal() {
   const dispatch = useAppDispatch();
@@ -44,11 +32,7 @@ export function BookingDetailsModal() {
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
 
-  const userTimeZone = useSyncExternalStore(
-    subscribeToTimeZone,
-    getUserTimeZone,
-    () => OFFICE_TIME_ZONE,
-  );
+  const userTimeZone = useUserTimeZone();
 
   const isOpen = useAppSelector(
     (state) => state.schedule.isBookingDetailsModalOpen,

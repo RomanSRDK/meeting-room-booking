@@ -2,11 +2,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 100%;
   min-height: 100vh;
   padding: 32px 20px;
-
   background-color: var(--color-background);
 }
 
@@ -15,13 +13,10 @@
   flex-direction: column;
   align-items: center;
   gap: 28px;
-
   width: 100%;
   max-width: 520px;
   padding: 40px 32px;
-
   text-align: center;
-
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-medium);
@@ -44,7 +39,6 @@
 
 .title {
   margin: 0;
-
   font-size: clamp(28px, 5vw, 36px);
   font-weight: 700;
   line-height: 1.2;
@@ -55,7 +49,6 @@
 .description {
   max-width: 420px;
   margin: 0;
-
   font-size: 16px;
   line-height: 1.6;
   color: var(--color-text-secondary);
@@ -64,7 +57,6 @@
 .redirectNotice {
   max-width: 420px;
   margin: 0;
-
   font-size: 14px;
   line-height: 1.5;
   color: var(--color-text-secondary);
@@ -74,19 +66,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   min-height: 42px;
   padding: 10px 18px;
-
   font-size: 14px;
   font-weight: 600;
   line-height: 1;
   color: var(--color-primary-text);
-
   background-color: var(--color-primary);
   border: 1px solid var(--color-primary);
   border-radius: var(--border-radius-medium);
-
   transition:
     background-color var(--transition-duration) ease,
     border-color var(--transition-duration) ease;

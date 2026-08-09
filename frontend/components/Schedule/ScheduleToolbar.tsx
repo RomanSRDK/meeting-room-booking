@@ -1,7 +1,5 @@
 import { addDays } from "date-fns";
-
 import { formatInOfficeTimeZone, WEEK_DAYS_COUNT } from "@/lib/date-time";
-
 import styles from "./Schedule.module.css";
 
 type ScheduleToolbarProps = {
