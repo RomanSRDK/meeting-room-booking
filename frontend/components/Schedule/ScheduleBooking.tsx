@@ -61,13 +61,15 @@ export function ScheduleBooking({
 
   const isOwnBooking = booking.user.id === currentUserId;
 
+  const isPastOwnBooking = isOwnBooking && bookingEnd <= now;
+
   const canOpenBooking = isOwnBooking && bookingEnd > now;
 
   const bookingClassName = `${styles.booking} ${
     isOwnBooking ? styles.ownBooking : styles.otherBooking
-  } ${canOpenBooking ? styles.clickableBooking : ""} ${
-    isCompactBooking ? styles.compactBooking : ""
-  }`;
+  } ${isPastOwnBooking ? styles.pastOwnBooking : ""} ${
+    canOpenBooking ? styles.clickableBooking : ""
+  } ${isCompactBooking ? styles.compactBooking : ""}`;
 
   const formattedBookingTime = `${formatInUserTimeZone(
     bookingStart,

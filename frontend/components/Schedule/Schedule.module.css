@@ -333,8 +333,7 @@
 }
 
 .ownBooking .bookingTime,
-.ownBooking .bookingAuthor,
-.ownBooking .compactBookingDetails {
+.ownBooking .bookingAuthor {
   color: rgb(255 255 255 / 78%);
 }
 
@@ -372,6 +371,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pastOwnBooking .bookingTitle,
+.pastOwnBooking .bookingTime {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: #a44a4a;
 }
 
 .state {
