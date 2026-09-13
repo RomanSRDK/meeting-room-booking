@@ -8,7 +8,7 @@ export function Footer() {
         Developed by Roman Serdiuk ·{" "}
         <Link
           className={styles.link}
-          href="https://github.com/RomanSRDK"
+          href="https://github.com/RomanSRDK/meeting-room-booking"
           target="_blank"
           rel="noopener noreferrer"
         >
